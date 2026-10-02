@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>micro:bit 데이터 모니터</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      background: #10151d;
+      color: #edf3fb;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+    main {
+      width: min(720px, calc(100% - 32px));
+    }
+    h1 {
+      margin-bottom: 24px;
+      font-size: clamp(24px, 5vw, 40px);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      padding: 24px;
+      border: 1px solid #314158;
+      border-radius: 16px;
+      background: #182230;
+    }
+    .label {
+      color: #9db0c8;
+      font-size: 14px;
+    }
+    .value {
+      margin-top: 12px;
+      font-family: ui-monospace, monospace;
+      font-size: 48px;
+      overflow-wrap: anywhere;
+    }
+    footer {
+      margin-top: 16px;
+      color: #7f93ad;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>micro:bit 데이터 모니터</h1>
+    <section class="grid">
+      <article class="card">
+        <div class="label">micro:bit → 서버</div>
+        <div class="value" id="microbit-to-server">-</div>
+      </article>
+      <article class="card">
+        <div class="label">서버 → micro:bit</div>
+        <div class="value" id="server-to-microbit">-</div>
+      </article>
+    </section>
+    <footer>송수신 횟수: <span id="exchange-count">0</span></footer>
+  </main>
+  <script>
+    async function updateStatus() {
+      try {
+        const response = await fetch('/api/status', { cache: 'no-store' });
+        const data = await response.json();
+        document.querySelector('#microbit-to-server').textContent = data.microbit_to_server;
+        document.querySelector('#server-to-microbit').textContent = data.server_to_microbit;
+        document.querySelector('#exchange-count').textContent = data.exchange_count;
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    updateStatus();
+    setInterval(updateStatus, 500);
+  </script>
+</body>
+</html>

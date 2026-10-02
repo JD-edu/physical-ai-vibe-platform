@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <title>PHYVIBE Studio</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="qwen.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="PHYVIBE 홈">
+        <span class="brand-mark">P</span>
+        <span><strong>PHYVIBE</strong><small>PHYSICAL AI STUDIO</small></span>
+      </a>
+      <div class="project-title">
+        <span class="status-dot"></span>
+        <input id="projectName" value="스마트 환경 모니터" aria-label="프로젝트 이름">
+        <span class="saved-state" id="savedState">저장됨</span>
+      </div>
+      <nav class="top-actions" aria-label="프로젝트 작업">
+        <button class="btn ghost" id="shareBtn">↗ 공유</button>
+        <button class="btn primary" id="exportBtn">↓ 내보내기</button>
+        <button class="icon-btn" id="settingsBtn" aria-label="AI 설정">⚙</button>
+        <button class="avatar" aria-label="사용자 메뉴">MK</button>
+      </nav>
+    </header>
+
+    <div class="mobile-tabs" role="tablist">
+      <button class="active" data-panel="promptPanel">AI 빌더</button>
+      <button data-panel="canvasPanel">라이브</button>
+      <button data-panel="devicePanel">장치</button>
+    </div>
+
+    <main class="studio-grid">
+      <section class="panel prompt-panel mobile-active" id="promptPanel">
+        <div class="panel-heading">
+          <div><span class="eyebrow">AI BUILDER</span><h1>무엇을 만들어 볼까요?</h1></div>
+          <button class="icon-btn small" id="newChatBtn" title="대화 초기화">＋</button>
+        </div>
+
+        <div class="conversation" id="conversation" aria-live="polite">
+          <article class="message ai-message">
+            <div class="bot-icon">✦</div>
+            <div>
+              <strong>PHYVIBE AI</strong>
+              <p>안녕하세요! 센서와 액추에이터를 연결해 원하는 피지컬 AI 인터페이스를 만들어 드릴게요.</p>
+              <p>예: “온도가 28도를 넘으면 경고하고 팬을 켜줘”</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="quick-section">
+          <span class="section-label">빠른 시작</span>
+          <div class="chips">
+            <button data-prompt="화분 토양 습도 게이지를 띄우고 30% 이하면 경고와 급수 밸브 버튼을 만들어줘">🌱 잔소리 화분</button>
+            <button data-prompt="초음파 거리와 좌우 모터를 제어하는 자율주행 터틀 대시보드를 만들어줘">🐢 자율주행 터틀</button>
+            <button data-prompt="온습도 모니터링 카드를 만들고 온도가 28도를 넘으면 경고해줘">🌡 온습도 모니터</button>
+            <button data-prompt="모터 속도를 조절하는 안전한 슬라이더를 만들어줘">⚙ 모터 제어</button>
+            <button data-prompt="초음파 센서로 10cm 이하 접근을 감지하는 경보판을 만들어줘">◉ 거리 경보기</button>
+            <button data-prompt="조도 센서 값을 실시간 차트로 보여줘">☀ 스마트 조명</button>
+          </div>
+        </div>
+
+        <div class="composer-wrap">
+          <div class="target-row">
+            <span>생성 대상</span>
+            <div class="segment" id="targetSegment">
+              <button class="active" data-target="widget">웹 UI</button>
+              <button data-target="makecode">MakeCode</button>
+              <button data-target="persona">AI 페르소나</button>
+            </div>
+          </div>
+          <div class="composer">
+            <textarea id="promptInput" rows="4" placeholder="자연어로 만들고 싶은 기능을 설명하세요..."></textarea>
+            <div class="composer-footer">
+              <span><kbd>⌘</kbd><kbd>Enter</kbd>로 생성</span>
+              <button id="generateBtn" class="send-btn" aria-label="생성">↑</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel canvas-panel" id="canvasPanel">
+        <div class="canvas-toolbar">
+          <div class="view-tabs" id="viewTabs">
+            <button class="active" data-view="preview">▶ 라이브 뷰</button>
+            <button data-view="code">‹/› 코드</button>
+            <button data-view="schema">{ } 스키마</button>
+          </div>
+          <div class="viewport-tools">
+            <button class="active" data-width="desktop" title="데스크톱">▰</button>
+            <button data-width="tablet" title="태블릿">▯</button>
+            <button data-width="mobile" title="모바일">▯</button>
+            <span></span>
+            <button id="refreshPreview" title="새로고침">↻</button>
+            <button id="fullscreenBtn" title="전체 화면">⛶</button>
+          </div>
+        </div>
+
+        <div class="workspace">
+          <div class="preview-frame" id="previewFrame">
+            <div class="dashboard-head">
+              <div><span class="live-pill"><i></i> LIVE</span><h2 id="dashboardTitle">교실 환경 대시보드</h2><p>micro:bit + ESP32 실시간 센서</p></div>
+              <div class="updated">마지막 업데이트 <strong id="lastUpdated">방금 전</strong></div>
+            </div>
+            <div class="widget-grid" id="widgetGrid"></div>
+          </div>
+
+          <div class="code-view hidden" id="codeView">
+            <div class="code-head"><span>generated-widget.js</span><button id="copyCodeBtn">복사</button></div>
+            <pre><code id="codeContent"></code></pre>
+          </div>
+
+          <div class="code-view hidden" id="schemaView">
+            <div class="code-head"><span>widget-schema.json</span><button id="copySchemaBtn">복사</button></div>
+            <pre><code id="schemaContent"></code></pre>
+          </div>
+        </div>
+        <div class="canvas-status"><span><i class="pulse"></i> 런타임 정상</span><span>JSON 위젯 엔진 · 60 FPS</span></div>
+      </section>
+
+      <aside class="panel device-panel" id="devicePanel">
+        <div class="device-scroll">
+          <section class="side-section bridge-card">
+            <div class="side-title"><div><span class="eyebrow">BRIDGE SERVER</span><h2>장치 연결</h2></div><label class="switch"><input type="checkbox" id="bridgeToggle"><span></span></label></div>
+            <div class="connection-hero">
+              <div class="connection-icon" id="connectionIcon">⌁</div>
+              <div><strong id="connectionLabel">기기 대기 중</strong><span id="connectionSub">브릿지를 시작해 주세요</span></div>
+            </div>
+            <div class="telemetry">
+              <div><span>게이트웨이</span><strong id="gatewayValue">—</strong></div>
+              <div><span>Wi-Fi 신호</span><strong id="rssiValue">—</strong></div>
+              <div><span>응답 속도</span><strong id="rttValue">—</strong></div>
+            </div>
+            <button class="btn serial-btn" id="serialBtn">⌁ USB 장치 페어링</button>
+            <button class="text-btn" id="wifiBtn">Wi-Fi 설정 프로비저닝 →</button>
+          </section>
+
+          <section class="side-section constraints">
+            <div class="side-title compact"><div><span class="eyebrow">SAFETY GUARDRAIL</span><h2>하드웨어 구성</h2></div><button class="icon-btn small" id="addHardwareBtn">＋</button></div>
+            <label class="hardware-item"><span class="hardware-icon violet">↻</span><span><strong>서보 모터</strong><small>P0 · 0–180° 클램핑</small></span><input type="checkbox" checked data-hardware="servo"></label>
+            <label class="hardware-item"><span class="hardware-icon cyan">⌁</span><span><strong>초음파 센서</strong><small>P1 / P2 · HC-SR04</small></span><input type="checkbox" checked data-hardware="ultrasonic"></label>
+            <label class="hardware-item"><span class="hardware-icon amber">⚙</span><span><strong>DC 모터</strong><small>ESP32 · 최대 80%</small></span><input type="checkbox" data-hardware="motor"></label>
+          </section>
+
+          <section class="side-section terminal-section">
+            <div class="terminal-head"><div><span class="eyebrow">SERIAL TERMINAL</span><h2>패킷 콘솔</h2></div><div><button id="clearLogsBtn">지우기</button><button id="copyErrorBtn">AI에 질문</button></div></div>
+            <div class="terminal" id="terminal" aria-live="polite"></div>
+            <div class="terminal-input"><span>TX</span><input id="txInput" placeholder="CMD:servo:90"><button id="sendTxBtn">전송</button></div>
+          </section>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" class="modal-card" id="settingsForm">
+      <div class="modal-head"><div><span class="eyebrow">AI INTEGRATION</span><h2>AI 공급자 설정</h2></div><button value="cancel" class="icon-btn">×</button></div>
+      <p class="modal-note">키는 이 브라우저의 로컬 저장소에만 보관됩니다.</p>
+      <label>공급자<select id="providerSelect"><option value="demo">내장 데모 엔진</option><option value="qwen">Local Qwen</option><option value="openai">OpenAI</option><option value="gemini">Google Gemini</option></select></label>
+      <label>모델<select id="modelSelect"></select></label>
+      <label>API 키<div class="secret-input"><input type="password" id="apiKeyInput" autocomplete="off" placeholder="API 키 입력"><button type="button" id="revealKeyBtn">보기</button></div></label>
+      <div class="test-result" id="testResult">연결 테스트를 실행해 주세요.</div>
+      <div class="modal-actions"><button type="button" class="btn ghost" id="testApiBtn">연결 테스트</button><button value="save" class="btn primary" id="saveSettingsBtn">저장</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="qwenStartupDialog" class="startup-dialog">
+    <div class="modal-card startup-card">
+      <div class="startup-orbit"><span>Q</span></div>
+      <span class="eyebrow">LOCAL AI RUNTIME</span>
+      <h2>Qwen3 8B를 기다리고 있어요</h2>
+      <p id="qwenStartupMessage">로컬 LLM 연결 상태를 확인하는 중입니다.</p>
+      <div class="startup-status"><i id="qwenStatusDot"></i><strong id="qwenStatusText">연결 확인 중</strong></div>
+      <code>llama-server -m &lt;Qwen3-8B.gguf&gt; --host 127.0.0.1 --port 8081</code>
+      <button class="btn primary wide" id="retryQwenBtn">지금 다시 연결</button>
+      <button class="btn ghost wide" id="demoModeBtn">데모 모드로 둘러보기</button>
+      <small>Qwen 없이도 데모 규칙 엔진으로 모든 화면과 하드웨어 흐름을 체험할 수 있습니다.</small>
+    </div>
+  </dialog>
+
+  <dialog id="wifiDialog">
+    <form method="dialog" class="modal-card" id="wifiForm">
+      <div class="modal-head"><div><span class="eyebrow">ZERO INSTALL</span><h2>ESP32 Wi-Fi 설정</h2></div><button value="cancel" class="icon-btn">×</button></div>
+      <p class="modal-note">먼저 USB 장치를 페어링한 뒤 네트워크 정보를 전송하세요.</p>
+      <label>Wi-Fi 이름 (SSID)<input id="ssidInput" required placeholder="네트워크 이름"></label>
+      <label>비밀번호<input type="password" id="wifiPasswordInput" required placeholder="Wi-Fi 비밀번호"></label>
+      <label>브릿지 서버 IP<input id="serverIpInput" value="192.168.0.81" required></label>
+      <div class="modal-actions"><button value="cancel" class="btn ghost">취소</button><button value="send" class="btn primary" id="sendWifiBtn">ESP32로 전송</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="shareDialog">
+    <div class="modal-card share-card">
+      <div class="modal-head"><div><span class="eyebrow">EXPORT & SHARE</span><h2>프로젝트 공유</h2></div><button class="icon-btn" onclick="this.closest('dialog').close()">×</button></div>
+      <div class="qr-placeholder" aria-label="프로젝트 QR 미리보기"><span>PHY</span><i></i></div>
+      <p>같은 네트워크의 스마트폰에서 대시보드를 리모컨으로 사용할 수 있습니다.</p>
+      <div class="share-link"><input id="shareUrl" readonly><button id="copyLinkBtn">복사</button></div>
+      <button class="btn primary wide" id="nativeShareBtn">스마트폰으로 공유</button>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

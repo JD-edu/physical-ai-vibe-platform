@@ -1,0 +1,19 @@
+{
+    "name": "microbit-esp32-wifi-uart",
+    "version": "0.0.1",
+    "description": "micro:bit P1/P2 UART blocks for ESP32 Wi-Fi communication",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "main.ts",
+        "README.md"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "supportedTargets": [
+        "microbit"
+    ],
+    "preferredEditor": "tsprj"
+}

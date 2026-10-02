@@ -1,0 +1,14 @@
+.startup-dialog::backdrop{background:#030912f2;backdrop-filter:blur(10px)}
+.startup-card{text-align:center;width:min(420px,calc(100vw - 28px));padding:34px}
+.startup-card h2{margin:12px 0 8px;font-size:22px}
+.startup-card>p{color:#8fa4b9;font-size:11px;line-height:1.6}
+.startup-card code{display:block;text-align:left;margin:17px 0;padding:12px 14px;border:1px solid #243c53;border-radius:9px;background:#06101b;color:#8ed8d9;font:11px/1.7 monospace}
+.startup-card>small{display:block;margin-top:12px;color:#5f758a;font-size:8px}
+.startup-orbit{width:66px;height:66px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;border:1px solid #24566a;background:#0b2232;box-shadow:0 0 32px #27d8e52c;position:relative}
+.startup-orbit:before{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid transparent;border-top-color:var(--cyan);animation:spin 1.2s linear infinite}
+.startup-orbit span{font-size:25px;font-weight:900;color:var(--cyan)}
+.startup-status{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:15px;font-size:10px}
+.startup-status i{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber)}
+.startup-status i.error{background:var(--red);box-shadow:0 0 10px var(--red)}
+.startup-status i.online{background:var(--green);box-shadow:0 0 10px var(--green)}
+@keyframes spin{to{transform:rotate(360deg)}}
