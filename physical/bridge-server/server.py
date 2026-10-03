@@ -27,6 +27,7 @@ latest_message = "아직 수신된 데이터가 없습니다."
 latest_time = "-"
 
 message_history = []
+message_sequence = 0
 
 # 마지막으로 서버에서 보낸 명령
 latest_command = "없음"
@@ -555,6 +556,32 @@ def run_tcp_server():
 # 메인 웹페이지
 # ==================================================
 
+# Studio and exported dashboards access the bridge from a separate web origin.
+@app.after_request
+def network_headers(response):
+    if request.path.startswith("/api/"):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return response
+
+
+@app.route("/api/command", methods=["POST"])
+def api_command():
+    global latest_command, latest_command_time
+    payload = request.get_json(silent=True)
+    command = payload.get("command") if isinstance(payload, dict) else None
+    if not isinstance(command, str) or not command.strip() or len(command) > 256 or "\n" in command or "\r" in command:
+        return jsonify(error="A single command line of 1–256 characters is required"), 400
+    sent_count, _ = broadcast_command(command)
+    if not sent_count:
+        return jsonify(error="No ESP32 command connection is available", sent_count=0), 503
+    with data_lock:
+        latest_command = command
+        latest_command_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return jsonify(sent_count=sent_count, command=command)
+
+
 @app.route("/", methods=["GET"])
 def home():
     with data_lock:
@@ -610,6 +637,7 @@ def api_status():
             current_command_time
         ),
         "message_history": current_history,
+        "message_sequence": message_sequence,
         "connected_clients": (
             get_client_count()
         )
@@ -630,10 +658,20 @@ def api_status():
 # ESP32에서 올라오는 데이터 수신
 # ==================================================
 
+@app.route("/exchange", methods=["POST"])
+def exchange_data():
+    """Accept Step 5 firmware telemetry while preserving its echo response."""
+    result = receive_data()
+    if result[1] != 200:
+        return result
+    return request.get_data(as_text=True).strip(), 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
 @app.route("/receive", methods=["POST"])
 def receive_data():
     global latest_message
     global latest_time
+    global message_sequence
 
     received_data = request.get_data(
         as_text=True
@@ -650,7 +688,9 @@ def receive_data():
         latest_message = received_data
         latest_time = receive_time
 
+        message_sequence += 1
         message_history.append({
+            "id": message_sequence,
             "time": receive_time,
             "message": received_data
         })

@@ -6,19 +6,21 @@
 
 프로그램은 두 개의 터미널에서 실행합니다.
 
-1. 터미널 1에서 Qwen3 8B 서버를 `8081` 포트로 실행합니다.
+1. 터미널 1에서 Qwen3 8B 서버를 `8080` 포트로 실행합니다.
 2. 터미널 2에서 웹 서버를 `3000` 포트로 실행합니다.
 3. Chrome 또는 Edge로 `http://localhost:3000/webapp/`에 접속합니다.
 
 ```text
-Qwen3 8B (llama.cpp)  http://localhost:8081
+Qwen3 8B (llama.cpp)  http://localhost:8080
           ↓ OpenAI 호환 API
 PHYVIBE 웹 스튜디오     http://localhost:3000/webapp/
-          ↓ WebSocket / Web Serial
-ESP32 장치 브릿지       ws://localhost:8080
+          ↓ HTTP (Wi-Fi / Ethernet)
+Flask 네트워크 서버      http://서버_PC_IP:5000
+          ↓ Wi-Fi / TCP 5001
+ESP32 Wi-Fi 브릿지 → micro:bit 컨트롤러 (MakeCode)
 ```
 
-> 포트 `8080`은 장치 브릿지가 사용하므로 llama.cpp는 반드시 `8081`로 실행합니다.
+> llama.cpp는 `8080`, 네트워크 브릿지는 HTTP `5000` 및 TCP `5001`을 사용합니다. micro:bit 프로그래밍은 MakeCode에서 별도로 진행합니다.
 
 ## 1. 준비물
 
@@ -130,7 +132,7 @@ C:\Users\user\models\Qwen3-8B-Q4_K_M.gguf
 llama serve \
   -m /실제/경로/Qwen3-8B-Q4_K_M.gguf \
   --host 127.0.0.1 \
-  --port 8081 \
+  --port 8080 \
   --alias qwen3-8b \
   -c 8192
 ```
@@ -143,7 +145,7 @@ llama serve \
 llama-server \
   -m /실제/경로/Qwen3-8B-Q4_K_M.gguf \
   --host 127.0.0.1 \
-  --port 8081 \
+  --port 8080 \
   --alias qwen3-8b \
   -c 8192
 ```
@@ -154,7 +156,7 @@ llama-server \
 ./build/bin/llama-server \
   -m /실제/경로/Qwen3-8B-Q4_K_M.gguf \
   --host 127.0.0.1 \
-  --port 8081 \
+  --port 8080 \
   --alias qwen3-8b \
   -c 8192
 ```
@@ -165,7 +167,7 @@ Windows PowerShell에서는 줄바꿈 문자로 백틱을 사용합니다.
 .\llama-server.exe `
   -m "C:\Users\user\models\Qwen3-8B-Q4_K_M.gguf" `
   --host 127.0.0.1 `
-  --port 8081 `
+  --port 8080 `
   --alias qwen3-8b `
   -c 8192
 ```
@@ -181,7 +183,7 @@ GPU 지원 버전의 llama.cpp를 설치했다면 다음 옵션을 추가할 수
 예:
 
 ```bash
-llama-server -m /실제/경로/Qwen3-8B-Q4_K_M.gguf --host 127.0.0.1 --port 8081 --alias qwen3-8b -c 8192 -ngl 99
+llama-server -m /실제/경로/Qwen3-8B-Q4_K_M.gguf --host 127.0.0.1 --port 8080 --alias qwen3-8b -c 8192 -ngl 99
 ```
 
 GPU 메모리가 부족하거나 서버가 종료되면 `-ngl 99`를 제거해 CPU로 실행하거나, `-ngl 20`처럼 숫자를 낮춥니다. 메모리가 부족하면 컨텍스트 크기도 `-c 4096`으로 낮춥니다.
@@ -195,15 +197,15 @@ GPU 메모리가 부족하거나 서버가 종료되면 `-ngl 99`를 제거해 C
 Linux/macOS:
 
 ```bash
-curl http://localhost:8081/health
-curl http://localhost:8081/v1/models
+curl http://localhost:8080/health
+curl http://localhost:8080/v1/models
 ```
 
 Windows PowerShell:
 
 ```powershell
-curl.exe http://localhost:8081/health
-curl.exe http://localhost:8081/v1/models
+curl.exe http://localhost:8080/health
+curl.exe http://localhost:8080/v1/models
 ```
 
 정상이면 `/health`는 `{"status":"ok"}`를 반환하고, `/v1/models` 결과에는 `qwen3-8b` 또는 GGUF 파일 경로가 표시됩니다.
@@ -211,7 +213,7 @@ curl.exe http://localhost:8081/v1/models
 간단한 생성 테스트:
 
 ```bash
-curl http://localhost:8081/v1/chat/completions \
+curl http://localhost:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"qwen3-8b","messages":[{"role":"user","content":"안녕하세요라고 답해줘"}],"stream":false}'
 ```
@@ -220,7 +222,7 @@ Windows PowerShell:
 
 ```powershell
 $body = '{"model":"qwen3-8b","messages":[{"role":"user","content":"안녕하세요라고 답해줘"}],"stream":false}'
-curl.exe http://localhost:8081/v1/chat/completions -H "Content-Type: application/json" -d $body
+curl.exe http://localhost:8080/v1/chat/completions -H "Content-Type: application/json" -d $body
 ```
 
 ## 6. PHYVIBE 웹앱 실행
@@ -247,14 +249,14 @@ python -m http.server 3000
 http://localhost:3000/webapp/
 ```
 
-웹앱은 시작하면서 `http://localhost:8081/v1/models`를 자동 확인합니다.
+웹앱은 시작하면서 `http://localhost:8080/v1/models`를 자동 확인합니다.
 
 - Qwen 서버가 준비되어 있으면 대기 화면이 자동으로 닫힙니다.
 - 서버가 꺼져 있으면 대기 화면이 유지되고 3초마다 다시 연결합니다.
 - 이 상태에서 터미널 1의 Qwen 서버를 실행하면 새로고침 없이 자동 연결됩니다.
 - `지금 다시 연결` 버튼으로 즉시 재검사할 수도 있습니다.
 
-Web Serial 기능은 보안 정책상 `localhost` 또는 HTTPS에서 실행한 Chrome/Edge를 사용해야 합니다.
+생성한 사용자 웹앱은 Wi-Fi 또는 Ethernet으로 HTTP/HTTPS 서버에 연결합니다. 네트워크 연결 및 독립 실행 HTML 내보내기는 `webapp/README.md`를 참고하세요.
 
 ## 7. 종료 및 다음 실행
 
@@ -265,7 +267,7 @@ Web Serial 기능은 보안 정책상 `localhost` 또는 HTTPS에서 실행한 C
 터미널 1:
 
 ```bash
-llama-server -m /실제/경로/Qwen3-8B-Q4_K_M.gguf --host 127.0.0.1 --port 8081 --alias qwen3-8b -c 8192
+llama-server -m /실제/경로/Qwen3-8B-Q4_K_M.gguf --host 127.0.0.1 --port 8080 --alias qwen3-8b -c 8192
 ```
 
 터미널 2:
@@ -293,8 +295,8 @@ http://localhost:3000/webapp/
 
 ### 웹앱에서 Qwen 연결 대기 화면이 계속 표시됨
 
-1. llama.cpp 명령에 `--port 8081`이 있는지 확인합니다.
-2. `curl http://localhost:8081/health`가 성공하는지 확인합니다.
+1. llama.cpp 명령에 `--port 8080`이 있는지 확인합니다.
+2. `curl http://localhost:8080/health`가 성공하는지 확인합니다.
 3. 모델 로딩이 끝날 때까지 기다립니다. 로딩 중에는 일시적으로 HTTP 503이 반환될 수 있습니다.
 4. 웹앱과 llama.cpp를 같은 PC에서 실행했는지 확인합니다.
 5. 브라우저 개발자 도구의 Console에서 CORS 또는 네트워크 오류를 확인합니다.
@@ -308,10 +310,10 @@ CORS 오류가 발생하면 llama.cpp 실행 옵션에 로컬 웹앱 출처를 �
 ### `Address already in use` 또는 포트 사용 중
 
 - 웹앱은 `3000`
-- 장치 브릿지는 `8080`
-- llama.cpp는 `8081`
+- 장치 브릿지는 HTTP `5000`, ESP32 명령 TCP `5001`
+- llama.cpp는 `8080`
 
-다른 프로그램이 `8081`을 사용 중이면 그 프로그램을 종료한 뒤 llama.cpp를 다시 실행합니다. 웹앱 코드는 현재 `8081`을 고정 주소로 사용하므로 임의의 다른 포트로 바꾸면 연결되지 않습니다.
+다른 프로그램이 `8080`을 사용 중이면 그 프로그램을 종료한 뒤 llama.cpp를 다시 실행합니다. 다른 포트를 사용하면 스튜디오의 AI 설정에서 로컬 LLM 서버 URL을 해당 주소로 변경하세요.
 
 ### 모델 로딩 중 메모리 부족
 
@@ -325,7 +327,7 @@ CORS 오류가 발생하면 llama.cpp 실행 옵션에 로컬 웹앱 출처를 �
 `-m` 뒤에 폴더가 아닌 실제 `.gguf` 파일의 전체 경로를 지정해야 합니다. 경로에 공백이 있으면 따옴표로 감쌉니다.
 
 ```bash
-llama-server -m "/home/user/My Models/Qwen3-8B-Q4_K_M.gguf" --port 8081
+llama-server -m "/home/user/My Models/Qwen3-8B-Q4_K_M.gguf" --port 8080
 ```
 
 ## 프로젝트 구성

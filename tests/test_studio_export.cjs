@@ -1,0 +1,21 @@
+const fs = require('fs'), vm = require('vm'), assert = require('assert');
+const source = fs.readFileSync('webapp/app.js','utf8');
+const elements = new Map();
+function el(key) { if (!elements.has(key)) elements.set(key,{textContent:key==='#dashboardTitle'?'Test dashboard':'',value:key==='#projectName'?'Project':'',classList:{add(){},remove(){}},dataset:{},innerHTML:''}); return elements.get(key); }
+let html;
+const context={document:{querySelector:el,createElement(){return {click(){}}}}, localStorage:{getItem(){return null},setItem(){}},structuredClone,Blob:class{constructor(parts){html=parts.join('')}},URL:{createObjectURL(){return 'blob:test'},revokeObjectURL(){}},setTimeout(){},clearTimeout(){}};
+vm.createContext(context);
+vm.runInContext(source.slice(0,source.indexOf('renderWidgets(); bindEvents();')),context);
+vm.runInContext('state.generationValid = true; downloadProject()',context);
+assert(html.includes('Wi-Fi / Ethernet'));
+assert(html.includes('<head>') && html.includes('<body>'));
+assert(html.includes('const dashboardProject = {\n'));
+assert(html.includes('// Generated dashboard configuration'));
+assert(html.split('\n').length > 100);
+assert(!/navigator.serial|requestPort|sendSerial/.test(source+html));
+const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+new vm.Script(script);
+vm.runInContext('state.widgets[0].title = "</script><script>alert(1)</script>"; downloadProject()',context);
+assert.equal((html.match(/<script>/g)||[]).length,1);
+new vm.Script(html.match(/<script>([\s\S]*)<\/script>/)[1]);
+console.log('Studio checks passed: standalone HTML export, executable runtime syntax, no serial API, script-safe project embedding.');

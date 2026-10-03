@@ -6,7 +6,7 @@
 
 const int MICROBIT_RX_PIN = 16;
 const int MICROBIT_TX_PIN = 17;
-const unsigned long MICROBIT_BAUD = 9600;
+const unsigned long MICROBIT_BAUD = 115200;
 const unsigned long DEBUG_BAUD = 115200;
 const unsigned long WIFI_TIMEOUT_MS = 15000;
 

@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ko">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Buttons</title
+  ><style>
+    body {
+      font-family: system-ui;
+      margin: 24px;
+      background: #eff4fa;
+      color: #14243a;
+    }
+    input,
+    button {
+      padding: 10px;
+      margin: 4px;
+    }
+    #endpoint {
+      width: min(70%, 400px);
+    }
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .widget {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    .widget-head,
+    .widget-main,
+    .slider-row,
+    .action-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .widget-value {
+      font-size: 30px;
+    }
+    .chart svg {
+      width: 100%;
+      height: 100px;
+    }
+    .chart-line {
+      fill: none;
+      stroke: #3988e8;
+      stroke-width: 2;
+    }
+    .chart-fill {
+      fill: #3988e822;
+    }
+    .warning {
+      border: 2px solid #e7a12b;
+    }
+    pre {
+      background: #14243a;
+      color: #c6e7ff;
+      padding: 16px;
+      white-space: pre-wrap;
+      max-height: 220px;
+      overflow: auto;
+    }
+  </style>
+  <h1>Buttons</h1>
+  <p>Wi-Fi / Ethernet → 서버 → ESP32 Wi-Fi 브릿지 → micro:bit 컨트롤러</p>
+  <input id="endpoint" aria-label="브릿지 서버 URL" /><button id="connect">
+    연결</button
+  ><button id="disconnect">연결 중지</button>
+  <p id="status">네트워크 대기 중</p>
+  <main id="widgetGrid" class="widget-grid"></main>
+  <h2>Wi-Fi 데이터 모니터</h2>
+  <pre id="monitor"></pre>
+  <script>
+    function escapeHtml(value) {
+      return String(value).replace(
+        /[&<>'"]/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            "'": "&#39;",
+            '"': "&quot;",
+          })[c],
+      );
+    }
+    function renderWidget(widget) {
+      const wide = widget.wide ? " wide" : "";
+      const warning =
+        widget.type === "alert" &&
+        Number(widget.value) <= Number(widget.threshold)
+          ? " warning"
+          : "";
+      const head = `<div class="widget-head"><span>${escapeHtml(widget.title)}</span><span class="widget-icon">${escapeHtml(widget.icon || "◇")}</span></div>`;
+      if (widget.type === "button") {
+        const commands = escapeHtml(
+          JSON.stringify(widget.actions.map((action) => action.text)),
+        );
+        return `<article class="widget${wide}" data-widget="${widget.id}">${head}<button class="widget-action primary" data-commands="${commands}">${escapeHtml(widget.title)}</button></article>`;
+      }
+      if (widget.type === "chart") {
+        const pts = widget.points || [20, 25, 23, 32, 28, 35];
+        const max = Math.max(...pts),
+          min = Math.min(...pts);
+        const points = pts
+          .map(
+            (v, i) =>
+              `${(i / (pts.length - 1)) * 100},${55 - ((v - min) / Math.max(1, max - min)) * 45}`,
+          )
+          .join(" ");
+        return `<article class="widget${wide}" data-widget="${widget.id}">${head}<div class="chart"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><defs><linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#3988e8"/><stop offset="1" stop-color="#fff"/></linearGradient></defs><path class="chart-grid" d="M0 15H100M0 30H100M0 45H100"/><polygon class="chart-fill" points="0,60 ${points} 100,60"/><polyline class="chart-line" points="${points}"/></svg></div><div class="widget-main"><span class="widget-value">${escapeHtml(widget.value)}</span><span class="widget-unit">${escapeHtml(widget.unit)}</span><span class="trend">실시간</span></div></article>`;
+      }
+      if (widget.type === "gauge") {
+        const ratio = Math.min(
+          100,
+          Math.max(
+            0,
+            ((Number(widget.value) - Number(widget.min || 0)) /
+              Math.max(
+                1,
+                Number(widget.max || 100) - Number(widget.min || 0),
+              )) *
+              100,
+          ),
+        );
+        const status =
+          Number(widget.value) < Number(widget.threshold || -Infinity)
+            ? "주의"
+            : "정상";
+        return `<article class="widget${wide}${status === "주의" ? " warning" : ""}" data-widget="${widget.id}">${head}<div class="gauge" style="--gauge-value:${ratio}%"></div><div class="widget-main"><span class="widget-value">${escapeHtml(widget.value)}</span><span class="widget-unit">${escapeHtml(widget.unit)}</span><span class="trend">${status}</span></div></article>`;
+      }
+      if (widget.type === "control") {
+        const command =
+          widget.command === "MOT"
+            ? `MOT:${escapeHtml(widget.value)}:${escapeHtml(widget.value)}`
+            : `${widget.command || `CMD:${widget.id}`}:${escapeHtml(widget.value)}`;
+        const stop =
+          widget.command === "MOT"
+            ? "MOT:0:0"
+            : `${widget.command || `CMD:${widget.id}`}:0`;
+        return `<article class="widget${wide}" data-widget="${widget.id}">${head}<div class="widget-main"><span class="widget-value" data-control-value>${escapeHtml(widget.value)}</span><span class="widget-unit">${escapeHtml(widget.unit)}</span></div><div class="slider-row"><span>${widget.min}</span><input type="range" min="${widget.min}" max="${widget.max}" value="${escapeHtml(widget.value)}" data-control="${widget.id}"><span>${widget.max}</span></div><div class="action-row"><button class="widget-action" data-command="${stop}">정지</button><button class="widget-action primary" data-command="${command}">적용</button></div></article>`;
+      }
+      return `<article class="widget${wide}${warning}" data-widget="${widget.id}">${head}<div class="widget-main"><span class="widget-value">${escapeHtml(widget.value)}</span><span class="widget-unit">${escapeHtml(widget.unit)}</span>${widget.trend ? `<span class="trend">${escapeHtml(widget.trend)}</span>` : ""}</div><div class="meter"><i style="width:${Math.min(100, Math.max(3, ((widget.value - (widget.min || 0)) / ((widget.max || 100) - (widget.min || 0))) * 100))}%"></i></div>${widget.type === "alert" ? `<div class="action-row"><span class="widget-action">기준 ${widget.threshold}${escapeHtml(widget.unit)}</span></div>` : ""}</article>`;
+    }
+    (function userAppRuntime(project) {
+      const grid = document.querySelector("#widgetGrid");
+      const status = document.querySelector("#status");
+      const monitor = document.querySelector("#monitor");
+      const endpoint = document.querySelector("#endpoint");
+      endpoint.value = project.network.bridgeUrl;
+      let controller,
+        lastId = 0;
+      function log(text) {
+        monitor.textContent = (monitor.textContent + text + "\n")
+          .split("\n")
+          .slice(-80)
+          .join("\n");
+      }
+      function render() {
+        grid.innerHTML = project.widgets.map(renderWidget).join("");
+      }
+      async function send(command, literal = false) {
+        if (!controller || controller.signal.aborted) {
+          status.textContent = "서버를 먼저 연결하세요";
+          return;
+        }
+        try {
+          const servo = command.match(
+            /^CMD:(servo|valve|mouth):(-?\d+(?:\.\d+)?)$/i,
+          );
+          if (servo && !literal)
+            command = `CMD:${servo[1]}:${Math.max(0, Math.min(180, Number(servo[2])))}`;
+          const motor = command.match(/^MOT:(-?\d+):(-?\d+)$/i);
+          if (motor && !literal)
+            command = `MOT:${Math.max(-255, Math.min(255, Number(motor[1])))}:${Math.max(-255, Math.min(255, Number(motor[2])))}`;
+          const response = await fetch(
+            `${project.network.bridgeUrl}/api/command`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ command }),
+              signal: AbortSignal.timeout(5000),
+            },
+          );
+          const result = await response.json();
+          if (!response.ok)
+            throw new Error(result.error || `HTTP ${response.status}`);
+          log(`TX ${command} · ESP32 ${result.sent_count}`);
+          return true;
+        } catch (error) {
+          log(`ERR ${error.message}`);
+          status.textContent = "명령 전송 실패";
+          return false;
+        }
+      }
+      document.querySelector("#connect").onclick = () => {
+        controller?.abort();
+        lastId = 0;
+        try {
+          const url = new URL(endpoint.value.trim());
+          if (
+            !["http:", "https:"].includes(url.protocol) ||
+            url.username ||
+            url.password
+          )
+            throw new Error("HTTP / HTTPS URL을 입력하세요");
+          project.network.bridgeUrl = url.href.replace(/\/$/, "");
+        } catch (error) {
+          status.textContent = error.message;
+          return;
+        }
+        const current = new AbortController();
+        controller = current;
+        async function poll() {
+          if (current.signal.aborted) return;
+          try {
+            const response = await fetch(
+              `${project.network.bridgeUrl}/api/status`,
+              {
+                cache: "no-store",
+                signal: AbortSignal.any([
+                  current.signal,
+                  AbortSignal.timeout(5000),
+                ]),
+              },
+            );
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (current.signal.aborted) return;
+            status.textContent = `서버 연결 완료 · 수신 ${data.message_sequence || 0}건 · ESP32 명령 연결 ${data.connected_clients}대`;
+            if (data.message_sequence < lastId) lastId = 0;
+            for (const item of [...(data.message_history || [])].reverse()) {
+              if (item.id <= lastId) continue;
+              for (const line of String(item.message)
+                .split(/\r?\n/)
+                .filter(Boolean)) {
+                log(`RX ${line}`);
+                const match = line.match(/^DATA:([^:]+):(.+)$/i);
+                let key, value;
+                if (match) {
+                  key = match[1];
+                  value = Number.isFinite(Number(match[2]))
+                    ? Number(match[2])
+                    : match[2];
+                } else {
+                  try {
+                    const packet = JSON.parse(line);
+                    if (packet.type === "sensor") {
+                      key = packet.k;
+                      value = packet.val;
+                    }
+                  } catch {}
+                }
+                const widget = project.widgets.find(
+                  (w) =>
+                    (w.sensorKey || w.id).toLowerCase() ===
+                    String(key).toLowerCase(),
+                );
+                if (widget) {
+                  widget.value = value;
+                  if (widget.points && Number.isFinite(Number(value)))
+                    widget.points = [
+                      ...widget.points.slice(-11),
+                      Number(value),
+                    ];
+                } else if (key !== undefined)
+                  log(
+                    `INFO 센서 키 "${key}"와 일치하는 위젯 없음. 사용 가능한 키: ${project.widgets.map((w) => w.id).join(", ")}`,
+                  );
+                else
+                  log(
+                    "INFO 위젯 업데이트 형식: DATA:<센서키>:<값> 또는 sensor JSON",
+                  );
+              }
+              lastId = item.id;
+            }
+            render();
+          } catch (error) {
+            if (current.signal.aborted) return;
+            status.textContent = `연결 실패 · ${error.message} · 자동 재시도`;
+          }
+          if (!current.signal.aborted) setTimeout(poll, 1000);
+        }
+        poll();
+      };
+      document.querySelector("#disconnect").onclick = () => {
+        controller?.abort();
+        status.textContent = "연결 중지";
+      };
+      grid.addEventListener("input", (e) => {
+        if (!e.target.matches("[data-control]")) return;
+        const widget = project.widgets.find(
+          (w) => w.id === e.target.dataset.control,
+        );
+        widget.value = Math.max(
+          widget.min,
+          Math.min(widget.max, Number(e.target.value)),
+        );
+        e.target
+          .closest(".widget")
+          .querySelector("[data-control-value]").textContent = widget.value;
+      });
+      grid.addEventListener("click", (e) => {
+        if (e.target.dataset.commands) {
+          (async () => {
+            for (const command of JSON.parse(e.target.dataset.commands)) {
+              if (!(await send(command, true))) break;
+            }
+          })();
+          return;
+        }
+        let command = e.target.dataset.command;
+        if (!command) return;
+        const current = e.target
+          .closest(".widget")
+          ?.querySelector("[data-control-value]")?.textContent;
+        if (current && !/:0(?::0)?$/.test(command))
+          command = command.startsWith("MOT:")
+            ? `MOT:${current}:${current}`
+            : command.replace(/:-?\d+(?:\.\d+)?$/, `:${current}`);
+        send(command);
+      });
+      render();
+    })({
+      version: 3,
+      harnessVersion: "3.1",
+      name: "스마트 환경 모니터",
+      title: "Buttons",
+      network: { transport: "http", bridgeUrl: "http://localhost:5000" },
+      widgets: [
+        {
+          id: "send-a",
+          type: "button",
+          title: "Send a",
+          icon: "◇",
+          value: 0,
+          unit: "",
+          min: 0,
+          max: 100,
+          threshold: 10,
+          wide: false,
+          actions: [{ skill: "send_text", text: "a" }],
+        },
+        {
+          id: "send-b",
+          type: "button",
+          title: "Send b",
+          icon: "◇",
+          value: 0,
+          unit: "",
+          min: 0,
+          max: 100,
+          threshold: 10,
+          wide: false,
+          actions: [{ skill: "send_text", text: "b" }],
+        },
+      ],
+    });
+  </script>
+</html>

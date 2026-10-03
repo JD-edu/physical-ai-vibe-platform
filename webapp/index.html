@@ -22,7 +22,7 @@
       </div>
       <nav class="top-actions" aria-label="프로젝트 작업">
         <button class="btn ghost" id="shareBtn">↗ 공유</button>
-        <button class="btn primary" id="exportBtn">↓ 내보내기</button>
+        <button class="btn primary" id="exportBtn">↓ 웹앱 내보내기</button>
         <button class="icon-btn" id="settingsBtn" aria-label="AI 설정">⚙</button>
         <button class="avatar" aria-label="사용자 메뉴">MK</button>
       </nav>
@@ -66,11 +66,10 @@
 
         <div class="composer-wrap">
           <div class="target-row">
-            <span>생성 대상</span>
+            <span>생성 대상</span><small id="activeProviderLabel" aria-live="polite"></small><button class="text-btn" id="returnToQwenBtn">Local LLM 연결 ↻</button>
             <div class="segment" id="targetSegment">
               <button class="active" data-target="widget">웹 UI</button>
-              <button data-target="makecode">MakeCode</button>
-              <button data-target="persona">AI 페르소나</button>
+              <a class="text-btn" href="https://makecode.microbit.org/" target="_blank" rel="noopener">micro:bit MakeCode ↗</a>
             </div>
           </div>
           <div class="composer">
@@ -103,14 +102,14 @@
         <div class="workspace">
           <div class="preview-frame" id="previewFrame">
             <div class="dashboard-head">
-              <div><span class="live-pill"><i></i> LIVE</span><h2 id="dashboardTitle">교실 환경 대시보드</h2><p>micro:bit + ESP32 실시간 센서</p></div>
+              <div><span class="live-pill"><i></i> LIVE</span><h2 id="dashboardTitle">교실 환경 대시보드</h2><p>Wi-Fi / Ethernet · ESP32 브릿지 · micro:bit 컨트롤러</p></div>
               <div class="updated">마지막 업데이트 <strong id="lastUpdated">방금 전</strong></div>
             </div>
             <div class="widget-grid" id="widgetGrid"></div>
           </div>
 
           <div class="code-view hidden" id="codeView">
-            <div class="code-head"><span>generated-widget.js</span><button id="copyCodeBtn">복사</button></div>
+            <div class="code-head"><span>generated-network-app.js</span><button id="copyCodeBtn">복사</button></div>
             <pre><code id="codeContent"></code></pre>
           </div>
 
@@ -125,29 +124,28 @@
       <aside class="panel device-panel" id="devicePanel">
         <div class="device-scroll">
           <section class="side-section bridge-card">
-            <div class="side-title"><div><span class="eyebrow">BRIDGE SERVER</span><h2>장치 연결</h2></div><label class="switch"><input type="checkbox" id="bridgeToggle"><span></span></label></div>
+            <div class="side-title"><div><span class="eyebrow">BRIDGE SERVER</span><h2>네트워크 연결</h2></div><label class="switch"><input type="checkbox" id="bridgeToggle"><span></span></label></div>
             <div class="connection-hero">
               <div class="connection-icon" id="connectionIcon">⌁</div>
               <div><strong id="connectionLabel">기기 대기 중</strong><span id="connectionSub">브릿지를 시작해 주세요</span></div>
             </div>
             <div class="telemetry">
               <div><span>게이트웨이</span><strong id="gatewayValue">—</strong></div>
-              <div><span>Wi-Fi 신호</span><strong id="rssiValue">—</strong></div>
-              <div><span>응답 속도</span><strong id="rttValue">—</strong></div>
+              <div><span>ESP32 연결 수</span><strong id="clientCountValue">—</strong></div>
+              <div><span>HTTP 응답 시간</span><strong id="rttValue">—</strong></div>
             </div>
-            <button class="btn serial-btn" id="serialBtn">⌁ USB 장치 페어링</button>
-            <button class="text-btn" id="wifiBtn">Wi-Fi 설정 프로비저닝 →</button>
+            <label class="network-field">브릿지 서버 URL<input id="bridgeUrlInput" type="url" placeholder="http://192.168.0.100:5000"></label><p class="network-note">PC는 Wi-Fi 또는 Ethernet으로 서버에 연결합니다. ESP32는 Wi-Fi 브릿지, micro:bit는 MakeCode로 프로그래밍하는 컨트롤러입니다.</p>
           </section>
 
           <section class="side-section constraints">
             <div class="side-title compact"><div><span class="eyebrow">SAFETY GUARDRAIL</span><h2>하드웨어 구성</h2></div><button class="icon-btn small" id="addHardwareBtn">＋</button></div>
             <label class="hardware-item"><span class="hardware-icon violet">↻</span><span><strong>서보 모터</strong><small>P0 · 0–180° 클램핑</small></span><input type="checkbox" checked data-hardware="servo"></label>
             <label class="hardware-item"><span class="hardware-icon cyan">⌁</span><span><strong>초음파 센서</strong><small>P1 / P2 · HC-SR04</small></span><input type="checkbox" checked data-hardware="ultrasonic"></label>
-            <label class="hardware-item"><span class="hardware-icon amber">⚙</span><span><strong>DC 모터</strong><small>ESP32 · 최대 80%</small></span><input type="checkbox" data-hardware="motor"></label>
+            <label class="hardware-item"><span class="hardware-icon amber">⚙</span><span><strong>DC 모터</strong><small>micro:bit · 최대 80%</small></span><input type="checkbox" data-hardware="motor"></label>
           </section>
 
           <section class="side-section terminal-section">
-            <div class="terminal-head"><div><span class="eyebrow">SERIAL TERMINAL</span><h2>패킷 콘솔</h2></div><div><button id="clearLogsBtn">지우기</button><button id="copyErrorBtn">AI에 질문</button></div></div>
+            <div class="terminal-head"><div><span class="eyebrow">NETWORK MONITOR</span><h2>Wi-Fi 데이터 모니터</h2></div><div><button id="clearLogsBtn">지우기</button><button id="copyErrorBtn">AI에 질문</button></div></div>
             <div class="terminal" id="terminal" aria-live="polite"></div>
             <div class="terminal-input"><span>TX</span><input id="txInput" placeholder="CMD:servo:90"><button id="sendTxBtn">전송</button></div>
           </section>
@@ -163,6 +161,7 @@
       <div class="modal-head"><div><span class="eyebrow">AI INTEGRATION</span><h2>AI 공급자 설정</h2></div><button value="cancel" class="icon-btn">×</button></div>
       <p class="modal-note">키는 이 브라우저의 로컬 저장소에만 보관됩니다.</p>
       <label>공급자<select id="providerSelect"><option value="demo">내장 데모 엔진</option><option value="qwen">Local Qwen</option><option value="openai">OpenAI</option><option value="gemini">Google Gemini</option></select></label>
+      <label>로컬 LLM 서버 URL<input id="llmUrlInput" type="url" placeholder="http://127.0.0.1:8080"></label>
       <label>모델<select id="modelSelect"></select></label>
       <label>API 키<div class="secret-input"><input type="password" id="apiKeyInput" autocomplete="off" placeholder="API 키 입력"><button type="button" id="revealKeyBtn">보기</button></div></label>
       <div class="test-result" id="testResult">연결 테스트를 실행해 주세요.</div>
@@ -177,34 +176,24 @@
       <h2>Qwen3 8B를 기다리고 있어요</h2>
       <p id="qwenStartupMessage">로컬 LLM 연결 상태를 확인하는 중입니다.</p>
       <div class="startup-status"><i id="qwenStatusDot"></i><strong id="qwenStatusText">연결 확인 중</strong></div>
-      <code>llama-server -m &lt;Qwen3-8B.gguf&gt; --host 127.0.0.1 --port 8081</code>
+      <label class="network-field">LLM 서버 URL<input id="startupLlmUrlInput" type="url" placeholder="http://127.0.0.1:8080"></label>
+      <code>llama-server -m &lt;Qwen3-8B.gguf&gt; --host 127.0.0.1 --port 8080</code>
       <button class="btn primary wide" id="retryQwenBtn">지금 다시 연결</button>
       <button class="btn ghost wide" id="demoModeBtn">데모 모드로 둘러보기</button>
       <small>Qwen 없이도 데모 규칙 엔진으로 모든 화면과 하드웨어 흐름을 체험할 수 있습니다.</small>
     </div>
   </dialog>
 
-  <dialog id="wifiDialog">
-    <form method="dialog" class="modal-card" id="wifiForm">
-      <div class="modal-head"><div><span class="eyebrow">ZERO INSTALL</span><h2>ESP32 Wi-Fi 설정</h2></div><button value="cancel" class="icon-btn">×</button></div>
-      <p class="modal-note">먼저 USB 장치를 페어링한 뒤 네트워크 정보를 전송하세요.</p>
-      <label>Wi-Fi 이름 (SSID)<input id="ssidInput" required placeholder="네트워크 이름"></label>
-      <label>비밀번호<input type="password" id="wifiPasswordInput" required placeholder="Wi-Fi 비밀번호"></label>
-      <label>브릿지 서버 IP<input id="serverIpInput" value="192.168.0.81" required></label>
-      <div class="modal-actions"><button value="cancel" class="btn ghost">취소</button><button value="send" class="btn primary" id="sendWifiBtn">ESP32로 전송</button></div>
-    </form>
-  </dialog>
-
   <dialog id="shareDialog">
     <div class="modal-card share-card">
-      <div class="modal-head"><div><span class="eyebrow">EXPORT & SHARE</span><h2>프로젝트 공유</h2></div><button class="icon-btn" onclick="this.closest('dialog').close()">×</button></div>
+      <div class="modal-head"><div><span class="eyebrow">EXPORT & SHARE</span><h2>스튜디오 링크 공유</h2></div><button class="icon-btn" onclick="this.closest('dialog').close()">×</button></div>
       <div class="qr-placeholder" aria-label="프로젝트 QR 미리보기"><span>PHY</span><i></i></div>
-      <p>같은 네트워크의 스마트폰에서 대시보드를 리모컨으로 사용할 수 있습니다.</p>
+      <p>이 링크는 스튜디오를 엽니다. 사용자 대시보드를 공유하려면 내보낸 HTML 웹앱을 웹 서버에서 제공하세요.</p>
       <div class="share-link"><input id="shareUrl" readonly><button id="copyLinkBtn">복사</button></div>
       <button class="btn primary wide" id="nativeShareBtn">스마트폰으로 공유</button>
     </div>
   </dialog>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=harness-3.1-readable"></script>
 </body>
 </html>

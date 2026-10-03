@@ -26,7 +26,7 @@ const int COMMAND_PORT = 5001;
 // ==================== micro:bit UART ====================
 const int RX2_PIN = 16;
 const int TX2_PIN = 17;
-const int MICROBIT_BAUD = 9600;
+const int MICROBIT_BAUD = 115200;
 
 // ==================== TB6612FNG 모터 ====================
 // 회로도 기준
@@ -535,7 +535,7 @@ void maintainConnections() {
 }
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     delay(200);
 
     initializeOLED();
