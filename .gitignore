@@ -5,3 +5,10 @@ built/
 __pycache__/
 *.py[cod]
 .DS_Store
+
+# Desktop build tools and packages
+.desktop-tools/
+dist/
+
+# Standalone C++ bridge build
+physical/bridge-server/build/

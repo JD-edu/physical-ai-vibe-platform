@@ -1,0 +1,11 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const main = fs.readFileSync('electron/main.cjs', 'utf8');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+assert(!main.includes('child_process'));
+assert(!main.includes('bridgeProcess'));
+assert(!main.includes('startBridge'));
+assert(!pkg.build.extraResources);
+assert(!fs.existsSync('electron/bridge_runner.py'));
+assert(main.includes('loadFile'));
+console.log('Electron architecture passed: Studio has no bridge process lifecycle or embedded backend resources.');

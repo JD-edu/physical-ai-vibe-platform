@@ -12,6 +12,12 @@ namespace esp32wifiuart {
     let lastServerMessage = ""
     let lastESP32Status = ""
     let started = false
+    let initializingUART = false
+    let activeBaud: BaudRate = BaudRate.BaudRate115200
+    let receiverRegistered = false
+    let serverMessageHandler: () => void = function () {}
+    let acknowledgedIds: string[] = []
+    let acknowledgedFrames: string[] = []
 
     /**
      * P14=TX, P15=RX, 9600bps로 UART를 시작하고
@@ -21,18 +27,34 @@ namespace esp32wifiuart {
     //% block="ESP32 시리얼 시작"
     //% weight=100
     export function start(): void {
+        if (started) return
+        startWithBaudRate(BaudRate.BaudRate9600)
+    }
+
+    /** Start UART at the same baud rate configured in the ESP32 firmware. */
+    //% blockId=esp32wifiuart_start_baud
+    //% block="ESP32 serial start baud %baud"
+    //% weight=99
+    export function startWithBaudRate(baud: BaudRate): void {
+        // MakeCode fibers may enter startup during a pause. Only one may initialize UART.
+        while (initializingUART) basic.pause(10)
+        if (started && activeBaud == baud) return
+        initializingUART = true
+        activeBaud = baud
         serial.redirect(
             SerialPin.P14,
             SerialPin.P15,
-            BaudRate.BaudRate9600
+            baud
         )
 
         serial.setRxBufferSize(128)
+        started = true
+        installReceiver()
         basic.pause(500)
 
         serial.writeLine("MB_START")
-        started = true
         basic.pause(2000)
+        initializingUART = false
     }
 
     /**
@@ -267,14 +289,24 @@ namespace esp32wifiuart {
     //% block="서버 문자열을 받았을 때"
     //% weight=50
     export function onServerMessage(handler: () => void): void {
+        serverMessageHandler = handler
         ensureStarted()
+    }
 
+    // Always drain STATUS frames, including when a project only uses Wi-Fi setup blocks.
+    // Register one UART event callback; adding/replacing a user handler must not duplicate it.
+    function installReceiver(): void {
+        if (receiverRegistered) return
+        receiverRegistered = true
         serial.onDataReceived(
             serial.delimiters(Delimiters.NewLine),
             function () {
                 let message = serial.readUntil(
                     serial.delimiters(Delimiters.NewLine)
-                ).trim()
+                )
+                if (message.charAt(message.length - 1) == "\r") {
+                    message = message.substr(0, message.length - 1)
+                }
 
                 if (message.length == 0) {
                     return
@@ -285,7 +317,13 @@ namespace esp32wifiuart {
                     lastESP32Status = message.substr(7)
                 } else {
                     lastServerMessage = message
-                    handler()
+                    let id = protocolCommandId()
+                    let cached = acknowledgedIds.indexOf(id)
+                    if (id.length > 0 && cached >= 0) {
+                        serial.writeLine(acknowledgedFrames[cached])
+                        return
+                    }
+                    serverMessageHandler()
                 }
             }
         )
@@ -345,6 +383,194 @@ namespace esp32wifiuart {
         serial.writeLine("CLEAR")
     }
 
+    /** Return the ID of the last v1 command; empty for legacy messages. */
+    //% blockId=esp32wifiuart_protocol_id block="protocol v1 command ID"
+    export function protocolCommandId(): string {
+        let frame = lastServerMessage
+        if (frame.indexOf("V1:CMD:") != 0) return ""
+        let separator = frame.substr(7).indexOf(":")
+        if (separator < 1) return ""
+        let id = frame.substr(7, separator)
+        return validProtocolKey(id) && id.length <= 32 ? id : ""
+    }
+
+    /** Return literal payload, including colons and spaces. */
+    //% blockId=esp32wifiuart_protocol_payload block="protocol v1 command text"
+    export function protocolCommandText(): string {
+        let id = protocolCommandId()
+        return id.length > 0 ? lastServerMessage.substr(8 + id.length) : lastServerMessage
+    }
+
+    /** Call only after the controller completed the requested operation. */
+    //% blockId=esp32wifiuart_protocol_ok block="protocol v1 acknowledge success ID %id"
+    export function acknowledgeCommand(id: string): void {
+        replyProtocol(id, "OK")
+    }
+
+    /** Report a controller error; code uses uppercase letters, digits and underscores. */
+    //% blockId=esp32wifiuart_protocol_error block="protocol v1 acknowledge error ID %id code %code"
+    export function rejectCommand(id: string, code: string): void {
+        if (code.length < 1 || code.length > 48) code = "DEVICE_ERROR"
+        for (let i = 0; i < code.length; i++) {
+            let c = code.charCodeAt(i)
+            if (!((c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c == 95)) {
+                code = "DEVICE_ERROR"
+                break
+            }
+        }
+        replyProtocol(id, "ERR:" + code)
+    }
+
+    /** Send numeric telemetry in the existing DATA:key:value format. */
+    //% blockId=esp32wifiuart_sensor block="protocol sensor %key value %value"
+    export function sendSensor(key: string, value: number): void {
+        if (validProtocolKey(key)) sendLine("DATA:" + key + ":" + value)
+    }
+
+    function validProtocolKey(key: string): boolean {
+        if (key.length < 1 || key.length > 32) return false
+        for (let i = 0; i < key.length; i++) {
+            let c = key.charCodeAt(i)
+            if (!((c >= 65 && c <= 90) || (c >= 97 && c <= 122) ||
+                (c >= 48 && c <= 57) || c == 95 || c == 45)) return false
+        }
+        return true
+    }
+
+    function replyProtocol(id: string, result: string): void {
+        if (!validProtocolKey(id)) return
+        let frame = "V1:ACK:" + id + ":" + result
+        let cached = acknowledgedIds.indexOf(id)
+        if (cached < 0) {
+            acknowledgedIds.push(id)
+            acknowledgedFrames.push(frame)
+            if (acknowledgedIds.length > 8) {
+                acknowledgedIds.shift()
+                acknowledgedFrames.shift()
+            }
+        } else {
+            frame = acknowledgedFrames[cached]
+        }
+        sendLine(frame)
+    }
+
+    /** Logical servo targets used by Studio's set_servo skill. */
+    export enum ServoTarget {
+        //% block="servo"
+        Servo = 0,
+        //% block="valve"
+        Valve = 1,
+        //% block="mouth"
+        Mouth = 2
+    }
+
+    let servoPins: AnalogPin[] = [AnalogPin.P0, AnalogPin.P0, AnalogPin.P0]
+    let servoConfigured: boolean[] = [false, false, false]
+
+    /** Bind a command target to an actual servo pin; no movement occurs here. */
+    //% blockId=esp32wifiuart_configure_servo
+    //% block="protocol servo configure %target pin %pin"
+    //% pin.defl=AnalogPin.P0 weight=49
+    export function configureServo(target: ServoTarget, pin: AnalogPin): void {
+        if (target < 0 || target > 2) return
+        // P14/P15 are reserved for the ESP32 UART.
+        if (pin == AnalogPin.P14 || pin == AnalogPin.P15) return
+        servoPins[target] = pin
+        servoConfigured[target] = true
+    }
+
+    /** Apply an integer angle (0–180) to a configured target. Invalid values do not move the servo. */
+    //% blockId=esp32wifiuart_servo_angle
+    //% block="protocol servo %target angle %angle"
+    //% angle.min=0 angle.max=180 angle.defl=90 weight=48
+    export function setServoAngle(target: ServoTarget, angle: number): void {
+        applyServoAngle(target, angle)
+    }
+
+    function applyServoAngle(target: ServoTarget, angle: number): boolean {
+        if (target < 0 || target > 2 || !servoConfigured[target]) return false
+        if (!(angle >= 0 && angle <= 180) || Math.round(angle) != angle) return false
+        pins.servoWritePin(servoPins[target], angle)
+        return true
+    }
+
+    /**
+     * Put this block inside onServerMessage. It supports literal a and CMD:servo/valve/mouth:angle.
+     * For v1 frames, success ACK follows PWM application or LED display completion.
+     * Unknown v1 commands receive ERR; legacy commands have no ACK.
+     */
+    //% blockId=esp32wifiuart_execute_server_command
+    //% block="execute received protocol command"
+    //% weight=47
+    export function executeServerCommand(): void {
+        // Snapshot before showString (which yields) can allow another message to arrive.
+        let id = protocolCommandId()
+        let text = protocolCommandText()
+        let error = "UNSUPPORTED_COMMAND"
+        let done = false
+        if (text == "a") {
+            basic.showString("a")
+            done = true
+        } else if (text.indexOf("CMD:") == 0) {
+            let fields = text.split(":")
+            if (fields.length == 3) {
+                let target = -1
+                if (fields[1] == "servo") target = ServoTarget.Servo
+                if (fields[1] == "valve") target = ServoTarget.Valve
+                if (fields[1] == "mouth") target = ServoTarget.Mouth
+                if (target >= 0) {
+                    let angle = parseServoAngle(fields[2])
+                    if (angle < 0) error = "INVALID_ANGLE"
+                    else if (!servoConfigured[target]) error = "SERVO_NOT_CONFIGURED"
+                    else done = applyServoAngle(target, angle)
+                }
+            }
+        }
+        if (id.length > 0) {
+            if (done) acknowledgeCommand(id)
+            else rejectCommand(id, error)
+        }
+    }
+
+    /**
+     * Read the angle for the selected target from the last received command.
+     * Handles raw CMD:servo:134 and V1:CMD:id:CMD:servo:134 equally.
+     * Returns -1 for another target, malformed text, or an angle outside 0–180.
+     * Reading this block does not move a servo or send an ACK.
+     */
+    //% blockId=esp32wifiuart_received_servo_angle
+    //% block="received %target angle"
+    //% target.defl=ServoTarget.Servo weight=46
+    export function receivedServoAngle(target: ServoTarget = ServoTarget.Servo): number {
+        let name = ""
+        if (target == ServoTarget.Servo) name = "servo"
+        else if (target == ServoTarget.Valve) name = "valve"
+        else if (target == ServoTarget.Mouth) name = "mouth"
+        else return -1
+        let fields = protocolCommandText().split(":")
+        if (fields.length != 3 || fields[0] != "CMD" || fields[1] != name) return -1
+        return parseServoAngle(fields[2])
+    }
+
+    /** True only when the received message contains a valid angle for this target. */
+    //% blockId=esp32wifiuart_is_servo_command
+    //% block="received valid %target command"
+    //% target.defl=ServoTarget.Servo weight=45
+    export function isServoCommand(target: ServoTarget = ServoTarget.Servo): boolean {
+        return receivedServoAngle(target) >= 0
+    }
+
+    function parseServoAngle(text: string): number {
+        if (text.length < 1 || text.length > 3) return -1
+        let angle = 0
+        for (let i = 0; i < text.length; i++) {
+            let digit = text.charCodeAt(i) - 48
+            if (digit < 0 || digit > 9) return -1
+            angle = angle * 10 + digit
+        }
+        return angle <= 180 ? angle : -1
+    }
+
     function limitMotorSpeed(speed: number): number {
         if (speed > 100) {
             return 100
@@ -358,9 +584,7 @@ namespace esp32wifiuart {
     }
 
     function ensureStarted(): void {
-        if (!started) {
-            start()
-            basic.pause(300)
-        }
+        while (initializingUART) basic.pause(10)
+        if (!started) start()
     }
 }

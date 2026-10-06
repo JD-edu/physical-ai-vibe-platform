@@ -5,6 +5,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <esp_arduino_version.h>
+#include <esp_system.h>
 
 // ==================== OLED ====================
 const int OLED_SDA_PIN = 21;
@@ -58,6 +59,10 @@ WiFiClient commandClient;
 String wifiSSID = "";
 String wifiPassword = "";
 String serverIP = DEFAULT_SERVER_IP;
+
+// Remember the credentials applied to the active station connection.
+String activeWiFiSSID = "";
+String activeWiFiPassword = "";
 
 // CONNECT 명령 전에는 절대로 네트워크 연결을 시도하지 않음
 bool microbitStarted = false;
@@ -159,10 +164,21 @@ bool connectWiFi() {
         return false;
     }
 
+    // Repeated CONNECT with unchanged credentials must not tear down a working link.
+    if (WiFi.status() == WL_CONNECTED && activeWiFiSSID == wifiSSID &&
+        activeWiFiPassword == wifiPassword) {
+        sendStatus("WIFI_ALREADY_CONNECTED");
+        return true;
+    }
+
     commandClient.stop();
-    WiFi.disconnect(true);
-    delay(200);
     WiFi.mode(WIFI_STA);
+    // This firmware owns retry timing. Do not race the core's automatic reconnect.
+    WiFi.setAutoReconnect(false);
+    WiFi.disconnect(false);
+    delay(200);
+    activeWiFiSSID = wifiSSID;
+    activeWiFiPassword = wifiPassword;
 
     showOLEDMessage("WiFi CONNECTING", "SSID:", wifiSSID, "Please wait...");
     sendStatus("WIFI_CONNECTING");
@@ -179,6 +195,7 @@ bool connectWiFi() {
         if (millis() - startedAt >= 20000) {
             showOLEDMessage("WiFi FAILED", "SSID:", wifiSSID, "Wait/retry");
             sendStatus("WIFI_FAILED");
+            lastWiFiReconnect = millis();
             return false;
         }
     }
@@ -186,6 +203,7 @@ bool connectWiFi() {
     showOLEDMessage("WiFi CONNECTED", "SSID:" + shortenText(WiFi.SSID(), 16),
                     "IP:" + WiFi.localIP().toString(), "Server: waiting");
     sendStatus("WIFI_CONNECTED");
+    lastWiFiReconnect = millis();
     return true;
 }
 
@@ -197,6 +215,7 @@ bool connectCommandServer() {
                     "WiFi IP:", WiFi.localIP().toString());
     sendStatus("SERVER_CONNECTING");
 
+    lastServerReconnect = millis();
     commandClient.stop();
     if (!commandClient.connect(serverIP.c_str(), COMMAND_PORT)) {
         showOLEDMessage("SERVER OFFLINE", serverIP + ":" + String(COMMAND_PORT),
@@ -238,7 +257,8 @@ void sendToServer(const String& data) {
     int code = http.POST(data);
     http.end();
 
-    if (code > 0) sendStatus("DATA_SENT");
+    Serial.printf("HTTP telemetry status=%d\n", code);
+    if (code >= 200 && code < 300) sendStatus("DATA_SENT");
     else sendStatus("DATA_SEND_FAILED");
 }
 
@@ -405,7 +425,8 @@ void processMicrobitCommand(String command) {
     command.trim();
     if (command.length() == 0) return;
 
-    Serial.println("micro:bit -> " + command);
+    if (command.startsWith("PASSWORD:")) Serial.println("micro:bit -> PASSWORD:[redacted]");
+    else Serial.println("micro:bit -> " + command);
 
     // 모터 명령은 Wi-Fi 연결 여부와 관계없이 즉시 처리
     if (processMotorCommand(command)) {
@@ -414,7 +435,7 @@ void processMicrobitCommand(String command) {
 
     if (command == "MB_START") {
         microbitStarted = true;
-        showOLEDMessage("micro:bit READY", "UART: 9600 bps", "Network disabled", "Send WiFi settings");
+        showOLEDMessage("micro:bit READY", "UART: " + String(MICROBIT_BAUD), "Network disabled", "Send WiFi settings");
         sendStatus("ESP32_READY");
         return;
     }
@@ -444,6 +465,7 @@ void processMicrobitCommand(String command) {
             return;
         }
 
+        if (serverIP != newIP) commandClient.stop();
         serverIP = newIP;
         showOLEDMessage("SERVER IP RECEIVED", serverIP, "Network disabled", "Send CONNECT");
         sendStatus("SERVER_IP_RECEIVED");
@@ -507,7 +529,8 @@ void checkServerCommand() {
 
     while (commandClient.available() > 0) {
         String command = commandClient.readStringUntil('\n');
-        command.trim();
+        // Remove only CRLF framing; preserve protocol payload spaces.
+        if (command.endsWith("\r")) command.remove(command.length() - 1);
         if (command.length() > 0) Serial2.println(command);
     }
 }
@@ -521,8 +544,9 @@ void maintainConnections() {
             lastWiFiReconnect = millis();
             showOLEDMessage("WiFi RECONNECT", wifiSSID, "Please wait...");
             sendStatus("WIFI_RECONNECTING");
-            WiFi.disconnect();
-            WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
+            // Give each attempt the full 20-second association/DHCP window.
+            // connectWiFi records its completion time before the next 5-second retry.
+            if (connectWiFi()) connectCommandServer();
         }
         return;
     }
@@ -537,6 +561,15 @@ void maintainConnections() {
 void setup() {
     Serial.begin(115200);
     delay(200);
+    Serial.printf("BOOT reset_reason=%d\n", static_cast<int>(esp_reset_reason()));
+    WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+        // Wi-Fi event callbacks run on another task: only use thread-safe Serial logging.
+        if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+            Serial.printf("WIFI_EVENT disconnected reason=%u\n", info.wifi_sta_disconnected.reason);
+        } else if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
+            Serial.println("WIFI_EVENT got IP");
+        }
+    });
 
     initializeOLED();
     initializeMotors();
@@ -551,7 +584,7 @@ void setup() {
     WiFi.disconnect(true);
     WiFi.mode(WIFI_OFF);
 
-    showOLEDMessage("ESP32 WAITING", "UART ready: 9600", "WiFi: OFF", "Wait micro:bit");
+    showOLEDMessage("ESP32 WAITING", "UART: " + String(MICROBIT_BAUD), "WiFi: OFF", "Wait micro:bit");
 }
 
 void loop() {

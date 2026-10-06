@@ -1,7 +1,7 @@
 {
     "name": "microbit-esp32-wifi-uart",
-    "version": "0.0.1",
-    "description": "micro:bit P1/P2 UART blocks for ESP32 Wi-Fi communication",
+    "version": "0.1.2",
+    "description": "micro:bit P14/P15 UART blocks for ESP32 Wi-Fi and PHYVIBE protocol v1 servo commands",
     "dependencies": {
         "core": "*"
     },

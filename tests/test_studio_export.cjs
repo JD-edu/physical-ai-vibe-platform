@@ -1,5 +1,5 @@
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
-const source = fs.readFileSync('webapp/app.js','utf8');
+const source = (fs.readFileSync('webapp/protocol-v1.js','utf8') + '\n' + fs.readFileSync('webapp/app.js','utf8'));
 const elements = new Map();
 function el(key) { if (!elements.has(key)) elements.set(key,{textContent:key==='#dashboardTitle'?'Test dashboard':'',value:key==='#projectName'?'Project':'',classList:{add(){},remove(){}},dataset:{},innerHTML:''}); return elements.get(key); }
 let html;

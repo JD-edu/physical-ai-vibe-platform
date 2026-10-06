@@ -2,9 +2,13 @@
 
 자연어로 피지컬 AI 대시보드를 만들고 micro:bit와 ESP32를 제어하는 브라우저 기반 스튜디오입니다. AI 생성은 사용자 PC에서 실행하는 **Qwen3 8B + llama.cpp**를 기본으로 사용합니다.
 
+## Protocol v1
+
+실행 ACK와 장치별 스킬 검증을 추가했습니다. [Protocol v1 규격과 첫 테스트](protocol/v1.md)를 참고하세요. Studio는 2.1.1, 독립 C++ 브릿지는 2.1.0입니다. microbit/ 확장 0.1.2은 Protocol v1 서보 명령과 실행 ACK 블록을 제공합니다. 기존 장치는 Legacy 프로필로 계속 사용할 수 있습니다.
+
 ## 가장 빠른 실행 순서
 
-프로그램은 두 개의 터미널에서 실행합니다.
+브라우저 Studio와 LLM은 아래 두 터미널에서 실행합니다. 실제 장치 통신에는 별도의 C++ 브릿지 앱을 실행하고 Start server를 누릅니다.
 
 1. 터미널 1에서 Qwen3 8B 서버를 `8080` 포트로 실행합니다.
 2. 터미널 2에서 웹 서버를 `3000` 포트로 실행합니다.
@@ -15,7 +19,7 @@ Qwen3 8B (llama.cpp)  http://localhost:8080
           ↓ OpenAI 호환 API
 PHYVIBE 웹 스튜디오     http://localhost:3000/webapp/
           ↓ HTTP (Wi-Fi / Ethernet)
-Flask 네트워크 서버      http://서버_PC_IP:5000
+독립 C++ 네트워크 서버      http://서버_PC_IP:5000
           ↓ Wi-Fi / TCP 5001
 ESP32 Wi-Fi 브릿지 → micro:bit 컨트롤러 (MakeCode)
 ```
@@ -337,10 +341,28 @@ llama-server -m "/home/user/My Models/Qwen3-8B-Q4_K_M.gguf" --port 8080
 ├── physical/
 │   ├── microbit/             # MakeCode 확장
 │   ├── esp32/                # ESP32 펌웨어
-│   └── bridge-server/        # 웹앱과 ESP32 통신 서버
+│   └── bridge-server/        # 독립 C++ 네트워크 서버와 시작/정지 UI
 ├── webapp/                   # PHYVIBE 웹 스튜디오
 └── tutorials/                # 단계별 실습 자료
 ```
 
 세부 웹앱 기능은 `webapp/README.md`, 하드웨어 실행과 배선 방법은 각 `physical` 하위 폴더의 README를 참고하세요.
 # physical-ai-vibe-platform
+
+## Ubuntu desktop app
+
+Electron 기반 Studio는 `electron/README.md`, 별도로 실행하는 C++ 브릿지는 `physical/bridge-server/README.md`를 참고하세요. 빌드 결과는 `dist/`의 `.deb` 및 `.AppImage`입니다. 데스크톱 앱은 별도 정적 웹 서버 없이 실행되며 llama.cpp는 따로 실행합니다.
+
+Electron 설치, Ubuntu 실행 파일 생성 및 문제 해결의 상세 순서는 [Ubuntu Electron setup guide](electron/UBUNTU_SETUP.md)를 참고하세요. 이미 만들어진 앱을 설치하려면 가이드의 Part 1만 진행하면 됩니다.
+
+## Standalone C++ bridge (architecture v2)
+
+Studio and exported customer webapps use the same external network bridge. Electron does not bundle, start, or stop it.
+
+```bash
+npm run build:bridge
+npm run test:bridge
+./physical/bridge-server/build/phyvibe-bridge
+```
+
+Click **Start server** in its window. The default HTTP/TCP ports are 5000/5001. Use `http://127.0.0.1:5000` from this PC and the server PC's LAN address from other devices. Qwen remains on 8080. See [C++ bridge setup](physical/bridge-server/README.md).

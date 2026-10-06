@@ -1,0 +1,60 @@
+{
+  "name": "physical-ai-vibe-platform",
+  "version": "2.1.1",
+  "description": "PHYVIBE physical AI authoring studio",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "node scripts/desktop-cli.cjs electron .",
+    "test": "node tests/test_local_llm.cjs && node tests/test_generation_harness.cjs && node tests/test_studio_export.cjs && node tests/test_electron_architecture.cjs && node tests/test_protocol_v1.cjs && node tests/test_makecode_protocol.cjs",
+    "build:bridge": "bash scripts/build-bridge.sh",
+    "pack": "node scripts/desktop-cli.cjs builder --linux --dir",
+    "dist": "node scripts/desktop-cli.cjs builder --linux AppImage deb",
+    "smoke": "node scripts/desktop-cli.cjs electron . --smoke-test",
+    "test:bridge": "ctest --test-dir physical/bridge-server/build --output-on-failure",
+    "bridge": "physical/bridge-server/build/phyvibe-bridge"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JD-edu/physical-ai-vibe-platform.git"
+  },
+  "keywords": [],
+  "author": "JD Edu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JD-edu/physical-ai-vibe-platform/issues"
+  },
+  "homepage": "https://github.com/JD-edu/physical-ai-vibe-platform#readme",
+  "build": {
+    "appId": "edu.jdedu.phyvibe",
+    "productName": "PHYVIBE Studio",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/main.cjs",
+      "webapp/**/*",
+      "package.json",
+      "LICENSE"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development",
+      "artifactName": "phyvibe-studio-${version}-${arch}.${ext}",
+      "maintainer": "JD Edu",
+      "executableName": "phyvibe-studio",
+      "syncDesktopName": true
+    },
+    "deb": {
+      "packageName": "phyvibe-studio"
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "typescript": "^5.9.3"
+  },
+  "desktopName": "phyvibe-studio.desktop"
+}

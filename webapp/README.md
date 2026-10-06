@@ -47,7 +47,7 @@ llama.cpp 설치, GGUF 검색, CPU/GPU 옵션, Windows 명령 및 문제 해결�
 
 ## 네트워크 연결 및 사용자 웹앱 실행
 
-1. `physical/bridge-server`에서 `pip install flask` 후 `python server.py`를 실행합니다.
+1. 저장소 루트에서 `npm run build:bridge` 후 `./physical/bridge-server/build/phyvibe-bridge`를 실행하고 **Start server**를 누릅니다. 독립 C++ 서버는 Studio와 고객 웹앱이 함께 사용합니다.
 2. ESP32에 서버 PC의 IP를 설정하고 micro:bit MakeCode 프로그램으로 연결합니다. Wi-Fi 설정은 보드 측에서 수행합니다.
 3. 스튜디오의 **브릿지 서버 URL**에 `http://서버_PC_IP:5000`을 입력하고 연결 토글을 켭니다. 같은 PC에서는 `http://localhost:5000`을 사용할 수 있습니다.
 4. Local Qwen을 선택하고 **웹 UI** 생성 요청을 입력합니다. 센서 ID는 micro:bit가 보내는 `DATA:<key>:<value>`의 key와 일치해야 합니다.
@@ -55,13 +55,21 @@ llama.cpp 설치, GGUF 검색, CPU/GPU 옵션, Windows 명령 및 문제 해결�
 
 HTTPS 페이지에서는 HTTPS 브릿지를 사용하세요. 다른 PC나 모바일에서 `localhost`는 그 장치 자신을 가리키므로 서버 PC의 네트워크 주소를 사용합니다.
 
-서버 연결 상태와 ESP32 연결 수는 별도로 표시됩니다. 서버에 연결되었더라도 ESP32 명령 TCP 연결이 없으면 명령은 실패합니다. 성공 표시는 서버가 ESP32 TCP 연결로 전송한 것을 의미하며 micro:bit의 실행 확인은 아닙니다.
+서버 연결 상태와 ESP32 연결 수는 별도로 표시됩니다. 서버에 연결되었더라도 ESP32 명령 TCP 연결이 없으면 명령은 실패합니다. Legacy 성공 표시는 ESP32 연결에 전송이 큐잉되었다는 뜻입니다. Protocol v1은 별도로 micro:bit 실행 ACK를 기다립니다.
 
 Wi-Fi 모니터는 서버가 수신한 데이터와 서버로 전송한 명령만 표시합니다. UART 디버그, USB 연결, 장치 페어링은 스튜디오에서 제공하지 않습니다. micro:bit MakeCode 링크는 외부 편집기를 엽니다.
 
 Local Qwen이 기본 생성 공급자입니다. 이전 버전의 기본 데모 설정은 한 번 Local Qwen으로 전환됩니다. 이후 명시적으로 선택한 데모 모드는 유지되며 LLM 요청이 없다는 표시가 나타납니다. OpenAI/Gemini 연결 테스트와 달리 해당 공급자의 웹앱 생성은 아직 구현되지 않았으며 생성 시 오류를 표시합니다.
 
 LLM 기본 URL은 `http://127.0.0.1:8080`입니다. 다른 포트는 AI 설정 또는 연결 대기창의 URL에서 변경할 수 있습니다. 데모 모드에서도 프롬프트 위의 **Local LLM 연결 ↻** 버튼으로 즉시 Local Qwen으로 돌아갑니다. 서버 연결 실패는 자동으로 데모 모드를 선택하지 않습니다. 브라우저가 다른 PC에서 실행되면 LLM 서버의 접근 가능한 네트워크 주소를 사용해야 합니다.
+
+## Protocol v1
+
+[규격 및 첫 하드웨어 테스트](../protocol/v1.md)를 참고하세요. 프롬프트 위 **생성 대상**에서 `Protocol v1 · micro:bit demo`를 선택하면 Local Qwen은 `a` 전송과 `temperature` 표시만 계획할 수 있습니다. 지원 스킬/프로필은 `protocol-v1.js`에 정의되어 있으며, Studio와 내보낸 웹앱은 같은 실행 ACK 클라이언트를 사용합니다. 장치 프로필을 바꾸면 새 웹앱을 생성해야 합니다.
+
+MakeCode 확장과 `physical/microbit/examples/protocol-v1-demo.ts`를 업로드한 뒤 사용하세요. 버튼 동작은 micro:bit 성공 ACK까지 기다리고, 오류/타임아웃/연결 끊김 시 다음 동작을 중지합니다. 기본 Legacy 프로필은 기존 raw 명령과 실행 미확인 표시를 유지합니다.
+
+서보 사용 시 `microbit/examples/protocol-v1-servo.ts`를 업로드하고 실제 핀을 설정한 뒤 **Protocol v1 · micro:bit servo**를 선택하세요. 이 프로필은 `CMD:servo:0..180` 정수 각도를 지원합니다. 서보 ACK는 PWM 설정 적용을 뜻하며 실제 축 위치 측정은 아닙니다.
 
 ## 생성 하네스
 
@@ -74,7 +82,7 @@ Local Qwen은 실행 코드를 직접 작성하는 대신 지원하는 스킬로
 | `set_servo` | micro:bit 서보 제어 슬라이더, 0–180도 | `{"skill":"set_servo","target":"servo"}` |
 | `set_motor` | micro:bit 모터 제어 슬라이더, 0–80% | `{"skill":"set_motor"}` |
 
-버튼은 `actions` 배열에 `send_text` 스킬을 지정하고 순서대로 실행합니다. 다른 위젯은 `action`을 지정합니다. 문자열에는 접두사나 숫자를 추가하지 않습니다. 네트워크 전송 실패 시 남은 버튼 동작은 중지합니다. 성공은 서버→ESP32 전달을 뜻하며 micro:bit 실행 완료는 아닙니다.
+버튼은 `actions` 배열에 `send_text` 스킬을 지정하고 순서대로 실행합니다. 다른 위젯은 `action`을 지정합니다. 문자열에는 접두사나 숫자를 추가하지 않습니다. 네트워크 전송 실패 시 남은 버튼 동작은 중지합니다. Legacy 성공은 서버→ESP32 전송 큐잉을 뜻합니다. Protocol v1 성공은 micro:bit가 실행 완료 ACK를 보냈다는 뜻입니다.
 
 예시 요청: **버튼을 누르면 소문자 a 한 글자를 보내는 웹앱을 만들어줘.**
 
@@ -92,5 +100,7 @@ Local Qwen은 실행 코드를 직접 작성하는 대신 지원하는 스킬로
 node tests/test_generation_harness.cjs
 node tests/test_local_llm.cjs
 node tests/test_studio_export.cjs
-python3 tests/test_network_bridge.py
+npm run test:bridge
 ```
+
+Electron Studio도 C++ 브릿지를 포함하거나 자동 실행하지 않습니다. 브릿지는 별도로 실행하며 Studio를 닫아도 계속 실행됩니다.

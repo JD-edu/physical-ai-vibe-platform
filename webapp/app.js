@@ -20,6 +20,7 @@ if (localStorage.getItem("phyvibe.providerVersion") !== "2") {
 const state = {
   widgets: structuredClone(defaultWidgets),
   target: "widget",
+  deviceProfile: localStorage.getItem("phyvibe.deviceProfile") || "legacy",
   bridge: null,
   bridgeUrl: localStorage.getItem("phyvibe.bridgeUrl") || "http://localhost:5000",
   pollController: null,
@@ -85,7 +86,7 @@ async function performQwenConnection() {
 
 function updateProviderStatus() {
   const label = $("#activeProviderLabel");
-  label.textContent = state.provider === "qwen" ? `Harness 3.1 · Local Qwen · ${QWEN_BASE_URL} · ${state.qwenModelId ? "연결 완료" : "연결 대기"}` : state.provider === "demo" ? "Harness 3.1 · 데모 모드 · LLM 요청 없음" : `${state.provider} · 웹앱 생성 미지원`;
+  label.textContent = state.provider === "qwen" ? `Harness 3.2 · Protocol v1 · Local Qwen · ${QWEN_BASE_URL} · ${state.qwenModelId ? "연결 완료" : "연결 대기"}` : state.provider === "demo" ? "Harness 3.2 · Protocol v1 · 데모 모드 · LLM 요청 없음" : `${state.provider} · 웹앱 생성 미지원`;
 }
 
 async function configureQwenUrl(value) {
@@ -126,14 +127,10 @@ function extractJson(text) {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
-const HARNESS_SKILLS = {
-  display_sensor: { description: "Display incoming DATA:key:value or sensor JSON", arguments: { key: "sensor key" } },
-  send_text: { description: "Send an exact literal string through the network bridge", arguments: { text: "1–256 characters, no CR/LF; preserve case and whitespace" } },
-  set_servo: { description: "Slider sends CMD:target:angle to micro:bit", arguments: { target: "servo, valve, or mouth", range: "0..180" } },
-  set_motor: { description: "Slider sends CMD:motor:percent to micro:bit", arguments: { range: "0..80" } }
-};
+const HARNESS_SKILLS = PROTOCOL_V1_CATALOG.skills;
 
 function normalizeWidgets(items) {
+  const profile = PROTOCOL_V1_CATALOG.profiles[state.deviceProfile] || PROTOCOL_V1_CATALOG.profiles.legacy;
   const allowedTypes = new Set(["metric", "gauge", "chart", "alert", "control", "button"]);
   if (!Array.isArray(items) || items.length < 1 || items.length > 8) throw new Error("widgets must contain 1–8 widgets");
   const ids = new Set();
@@ -154,16 +151,23 @@ function normalizeWidgets(items) {
       const action = item.action;
       if (action?.skill === "set_servo" && ["servo", "valve", "mouth"].includes(action.target)) {
         widget.action = { skill: "set_servo", target: action.target }; widget.command = `CMD:${action.target}`;
-        widget.min = Math.max(0, widget.min); widget.max = Math.min(180, widget.max);
+        widget.min = Math.ceil(Math.max(0, widget.min)); widget.max = Math.floor(Math.min(180, widget.max));
       } else if (action?.skill === "set_motor") {
         widget.action = { skill: "set_motor" }; widget.command = "CMD:motor";
         widget.min = Math.max(0, widget.min); widget.max = Math.min(80, widget.max);
       } else throw new Error(`${item.id}: control requires set_servo or set_motor action`);
       if (widget.max <= widget.min) throw new Error(`${item.id}: invalid control range`);
-      widget.value = Math.max(widget.min, Math.min(widget.max, widget.value));
+      widget.value = Math.max(widget.min, Math.min(widget.max, widget.action.skill === "set_servo" ? Math.round(widget.value) : widget.value));
     } else {
       if (item.action?.skill !== "display_sensor" || typeof item.action.key !== "string" || !/^[a-zA-Z0-9_-]+$/.test(item.action.key)) throw new Error(`${item.id}: sensor widget requires display_sensor with an English key`);
       widget.action = { skill: "display_sensor", key: item.action.key }; widget.sensorKey = item.action.key;
+    }
+    const actions = widget.actions || [widget.action];
+    for (const action of actions) {
+      if (!profile.skills.includes(action.skill)) throw new Error(`${item.id}: skill ${action.skill} is unavailable in this device profile`);
+      if (action.skill === "set_servo" && profile.servoTargets && !profile.servoTargets.includes(action.target)) throw new Error(`${item.id}: supported servo targets: ${profile.servoTargets.join(", ")}`);
+      if (action.skill === "send_text" && profile.textCommands && !profile.textCommands.includes(action.text)) throw new Error(`${item.id}: supported text commands: ${profile.textCommands.join(", ")}`);
+      if (action.skill === "display_sensor" && profile.sensorKeys && !profile.sensorKeys.includes(action.key)) throw new Error(`${item.id}: supported sensor keys: ${profile.sensorKeys.join(", ")}`);
     }
     return widget;
   });
@@ -171,10 +175,13 @@ function normalizeWidgets(items) {
 
 async function generateWithQwen(prompt) {
   if (!state.qwenModelId && !(await checkQwenConnection())) throw new Error("Qwen3 8B에 연결할 수 없습니다.");
-  const system = `You are PHYVIBE's network webapp planner. Return JSON only; do not generate executable code. Use only the supplied skills and their arguments: ${JSON.stringify(HARNESS_SKILLS)}.
+  const profile = PROTOCOL_V1_CATALOG.profiles[state.deviceProfile] || PROTOCOL_V1_CATALOG.profiles.legacy;
+  const availableSkills = Object.fromEntries(profile.skills.map(id => [id, HARNESS_SKILLS[id]]));
+  const system = `Device profile: ${JSON.stringify(profile)}. Only use its listed skills, servoTargets, sensorKeys and textCommands when present. The runtime handles protocol IDs/ACKs; do not generate V1 frames yourself.
+You are PHYVIBE's network webapp planner. Return JSON only; do not generate executable code. Use only the supplied skills and their arguments: ${JSON.stringify(availableSkills)}.
 Button example (copy this structure for literal text requests): {"title":"Send a","widgets":[{"id":"send-a","type":"button","title":"Send a","actions":[{"skill":"send_text","text":"a"}]}]}.
 Sensor example: {"title":"Temperature","widgets":[{"id":"temperature","type":"metric","title":"Temperature","action":{"skill":"display_sensor","key":"temperature"},"value":0,"unit":"°C"}]}.
-Control example: {"title":"Servo","widgets":[{"id":"servo","type":"control","title":"Servo","action":{"skill":"set_servo","target":"servo"},"min":0,"max":180,"value":90}]}.
+${profile.skills.includes("set_servo") ? 'Control example: {"title":"Servo","widgets":[{"id":"servo","type":"control","title":"Servo","action":{"skill":"set_servo","target":"servo"},"min":0,"max":180,"value":90}]} .' : "This profile does not support control widgets."}
 Optional widget fields: icon, value, unit, min, max, threshold, wide, points.
 Create 1–8 widgets. metric/gauge/chart/alert must have action display_sensor. control must have action set_servo with target or set_motor. button must have actions:[{"skill":"send_text","text":"a"}] instead of action; actions execute in order. For a request to send literal 'a' on click, make a button whose send_text text is exactly "a". Never add CMD prefixes, numeric values, or newlines to literal text. Keep explicit user sensor keys and payloads exactly. Do not substitute a slider for a requested button.
 The browser communicates with an HTTP bridge over Wi-Fi/Ethernet. ESP32 bridges Wi-Fi; micro:bit handles physical control and is programmed separately in MakeCode. No serial/USB or provisioning. /no_think`;
@@ -265,9 +272,9 @@ function renderWidget(widget) {
 
 function renderWidgets() {
   $("#widgetGrid").innerHTML = state.widgets.map(renderWidget).join("");
-  $("#schemaContent").textContent = JSON.stringify({ version: 3, skills: HARNESS_SKILLS, network: { transport: "http", bridgeUrl: state.bridgeUrl, statusPath: "/api/status", commandPath: "/api/command" }, title: $("#dashboardTitle").textContent, widgets: state.widgets }, null, 2);
-  const project = { title: $("#dashboardTitle").textContent, network: { transport: "http", bridgeUrl: state.bridgeUrl }, widgets: state.widgets };
-  $("#codeContent").textContent = `${escapeHtml.toString()}\n${renderWidget.toString()}\n(${userAppRuntime.toString()})(${JSON.stringify(project, null, 2)});`;
+  $("#schemaContent").textContent = JSON.stringify({ version: 3, skills: HARNESS_SKILLS, deviceProfile: state.deviceProfile, network: { transport: "http", bridgeUrl: state.bridgeUrl, protocol: PROTOCOL_V1_CATALOG.profiles[state.deviceProfile]?.acknowledged ? "phyvibe-v1" : "legacy", statusPath: "/api/status", commandPath: "/api/command" }, title: $("#dashboardTitle").textContent, widgets: state.widgets }, null, 2);
+  const project = { title: $("#dashboardTitle").textContent, network: { transport: "http", bridgeUrl: state.bridgeUrl, protocol: PROTOCOL_V1_CATALOG.profiles[state.deviceProfile]?.acknowledged ? "phyvibe-v1" : "legacy", deviceProfile: state.deviceProfile }, widgets: state.widgets };
+  $("#codeContent").textContent = `${deliverProtocolCommand.toString()}\n${escapeHtml.toString()}\n${renderWidget.toString()}\n(${userAppRuntime.toString()})(${JSON.stringify(project, null, 2)});`;
 }
 
 function addLog(direction, message, level = "") {
@@ -315,11 +322,12 @@ function widgetsFromPrompt(prompt) {
 async function generate() {
   const input = $("#promptInput"); const prompt = input.value.trim();
   if (!prompt || state.generating) return;
-  state.generating = true; state.generationValid = false; $("#exportBtn").disabled = true; $("#generateBtn").disabled = true; appendMessage("user", prompt); input.value = "";
+  state.generating = true; $("#deviceProfileSelect").disabled = true; state.generationValid = false; $("#exportBtn").disabled = true; $("#generateBtn").disabled = true; appendMessage("user", prompt); input.value = "";
   const typing = appendMessage("ai", "요청을 분석하고 하드웨어 안전 규칙을 적용하는 중…", true);
   if (state.target === "widget") {
     try {
       if (!["qwen", "demo"].includes(state.provider)) throw new Error("이 공급자의 웹앱 생성은 아직 지원되지 않습니다. AI 설정에서 Local Qwen을 선택하세요.");
+      if (state.provider === "demo" && PROTOCOL_V1_CATALOG.profiles[state.deviceProfile]?.acknowledged) throw new Error("Protocol v1 생성은 Local Qwen을 선택하세요.");
       const generated = state.provider === "qwen"
         ? await generateWithQwen(prompt)
         : { title: /화분|토양/.test(prompt) ? "잔소리 식물 화분" : /터틀|자율주행/.test(prompt) ? "자율주행 터틀 컨트롤" : (prompt.length > 20 ? "새 피지컬 AI 대시보드" : prompt.replace(/만들어줘|보여줘|해줘/g, "").trim()), widgets: widgetsFromPrompt(prompt) };
@@ -332,13 +340,13 @@ async function generate() {
     } catch (error) {
       typing.querySelector("div:last-child").classList.remove("typing");
       typing.querySelector("p").textContent = `생성 실패: ${error.message}`;
-      state.generating = false;
+      state.generating = false; $("#deviceProfileSelect").disabled = false;
       $("#generateBtn").disabled = false;
       if (state.provider === "qwen" && !state.qwenModelId) startQwenGate();
       return;
     }
   }
-  state.generating = false; $("#generateBtn").disabled = false; $("#savedState").textContent = "저장됨"; toast("안전 규칙을 적용해 생성했습니다");
+  state.generating = false; $("#deviceProfileSelect").disabled = false; $("#generateBtn").disabled = false; $("#savedState").textContent = "저장됨"; toast("안전 규칙을 적용해 생성했습니다");
 }
 
 function switchView(view) {
@@ -442,14 +450,7 @@ async function sendNetwork(text, literal = false) {
   }
   if (!state.bridge) { toast("네트워크 서버를 먼저 연결하세요"); return false; }
   try {
-    const response = await fetch(`${state.bridgeUrl}/api/command`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ command: value }), signal: AbortSignal.timeout(5000)
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    addLog("TX", `${value} · ESP32 ${result.sent_count}대에 전달`);
-    return true;
+    return await deliverProtocolCommand({ bridgeUrl: state.bridgeUrl, protocol: PROTOCOL_V1_CATALOG.profiles[state.deviceProfile]?.acknowledged ? "phyvibe-v1" : "legacy" }, value, message => addLog(message.startsWith("ACK") ? "ACK" : "TX", message), state.pollController?.signal);
   } catch (error) { addLog("ERR", `명령 전송 실패: ${error.message}`, "err"); toast("네트워크 명령 전송 실패"); return false; }
 }
 
@@ -484,17 +485,7 @@ function userAppRuntime(project) {
       const motor = command.match(/^MOT:(-?\d+):(-?\d+)$/i);
       if (motor && !literal)
         command = `MOT:${Math.max(-255, Math.min(255, Number(motor[1])))}:${Math.max(-255, Math.min(255, Number(motor[2])))}`;
-      const response = await fetch(`${project.network.bridgeUrl}/api/command`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command }),
-        signal: AbortSignal.timeout(5000),
-      });
-      const result = await response.json();
-      if (!response.ok)
-        throw new Error(result.error || `HTTP ${response.status}`);
-      log(`TX ${command} · ESP32 ${result.sent_count}`);
-      return true;
+      return await deliverProtocolCommand(project.network, command, log, controller.signal);
     } catch (error) {
       log(`ERR ${error.message}`);
       status.textContent = "명령 전송 실패";
@@ -630,9 +621,9 @@ function userAppRuntime(project) {
 
 function downloadProject() {
   if (!state.generationValid || state.generating) { toast("먼저 웹앱을 성공적으로 생성하세요. 이전 결과는 새 웹앱으로 내보낼 수 없습니다."); return; }
-  const project = { version: 3, harnessVersion: "3.1", name: $("#projectName").value, title: $("#dashboardTitle").textContent, network: { transport: "http", bridgeUrl: state.bridgeUrl }, widgets: state.widgets };
+  const project = { version: 3, harnessVersion: "3.2", name: $("#projectName").value, title: $("#dashboardTitle").textContent, network: { transport: "http", bridgeUrl: state.bridgeUrl, protocol: PROTOCOL_V1_CATALOG.profiles[state.deviceProfile]?.acknowledged ? "phyvibe-v1" : "legacy", deviceProfile: state.deviceProfile }, widgets: state.widgets };
   const json = JSON.stringify(project, null, 2).replace(/</g, "\\u003c");
-  const script = `// Display helpers\n${escapeHtml.toString()}\n\n${renderWidget.toString()}\n\n// Network connection, sensor updates, and button actions\n${userAppRuntime.toString()}\n\n// Generated dashboard configuration\nconst dashboardProject = ${json};\n\n// Start the dashboard\nuserAppRuntime(dashboardProject);`;
+  const script = `// Protocol command delivery (legacy or acknowledged v1)\n${deliverProtocolCommand.toString()}\n\n// Display helpers\n${escapeHtml.toString()}\n\n${renderWidget.toString()}\n\n// Network connection, sensor updates, and button actions\n${userAppRuntime.toString()}\n\n// Generated dashboard configuration\nconst dashboardProject = ${json};\n\n// Start the dashboard\nuserAppRuntime(dashboardProject);`;
   const html = `<!doctype html>
 <html lang="ko">
 <head>
@@ -764,6 +755,13 @@ async function testApi() {
 }
 
 function bindEvents() {
+  $("#deviceProfileSelect").addEventListener("change", e => {
+    state.deviceProfile = e.target.value;
+    localStorage.setItem("phyvibe.deviceProfile", state.deviceProfile);
+    state.generationValid = false; $("#exportBtn").disabled = true;
+    state.widgets = []; renderWidgets();
+    toast("장치 프로필 변경 · 해당 MakeCode 프로그램을 업로드하고 웹앱을 다시 생성하세요");
+  });
   $("#generateBtn").addEventListener("click", generate); $("#promptInput").addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") generate(); });
   $$("[data-prompt]").forEach(button => button.addEventListener("click", () => { $("#promptInput").value = button.dataset.prompt; generate(); }));
   $$("#targetSegment button").forEach(button => button.addEventListener("click", () => { state.target = button.dataset.target; $$("#targetSegment button").forEach(b => b.classList.toggle("active", b === button)); }));
@@ -801,6 +799,9 @@ function bindEvents() {
   $("#qwenStartupDialog").addEventListener("cancel", event => event.preventDefault());
 }
 
+$("#deviceProfileSelect").innerHTML = Object.entries(PROTOCOL_V1_CATALOG.profiles).map(([id, profile]) => `<option value="${id}">${escapeHtml(profile.label)}</option>`).join("");
+if (!PROTOCOL_V1_CATALOG.profiles[state.deviceProfile]) state.deviceProfile = "legacy";
+$("#deviceProfileSelect").value = state.deviceProfile;
 renderWidgets(); bindEvents();
 $("#exportBtn").disabled = true;
 $("#bridgeUrlInput").value = state.bridgeUrl;

@@ -66,7 +66,7 @@
 
         <div class="composer-wrap">
           <div class="target-row">
-            <span>생성 대상</span><small id="activeProviderLabel" aria-live="polite"></small><button class="text-btn" id="returnToQwenBtn">Local LLM 연결 ↻</button>
+            <span>생성 대상</span><select id="deviceProfileSelect" aria-label="장치 프로필"></select><small id="activeProviderLabel" aria-live="polite"></small><button class="text-btn" id="returnToQwenBtn">Local LLM 연결 ↻</button>
             <div class="segment" id="targetSegment">
               <button class="active" data-target="widget">웹 UI</button>
               <a class="text-btn" href="https://makecode.microbit.org/" target="_blank" rel="noopener">micro:bit MakeCode ↗</a>
@@ -194,6 +194,7 @@
     </div>
   </dialog>
 
-  <script src="app.js?v=harness-3.1-readable"></script>
+  <script src="protocol-v1.js?v=1-servo"></script>
+  <script src="app.js?v=protocol-v1-servo"></script>
 </body>
 </html>

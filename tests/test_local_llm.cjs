@@ -1,5 +1,5 @@
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
-const source = fs.readFileSync('webapp/app.js','utf8').split('renderWidgets(); bindEvents();')[0];
+const source = (fs.readFileSync('webapp/protocol-v1.js','utf8') + '\n' + fs.readFileSync('webapp/app.js','utf8')).split('renderWidgets(); bindEvents();')[0];
 async function test(saved, version, expected) {
   const storage = new Map(Object.entries({'phyvibe.provider':saved,'phyvibe.providerVersion':version}).filter(([,v])=>v));
   const nodes = new Map();
