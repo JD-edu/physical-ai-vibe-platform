@@ -1,0 +1,97 @@
+Start testing: Oct 31 20:52 KST
+----------------------------------------------------------
+1/4 Testing: bridge_link_events
+1/4 Test: bridge_link_events
+Command: "/home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test"
+Directory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+"bridge_link_events" start time: Oct 31 20:52 KST
+Output:
+----------------------------------------------------------
+********* Start testing of NetworkStateTest *********
+Config: Using QtTest library 5.15.13, Qt 5.15.13 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 13.2.0), ubuntu 24.04
+PASS   : NetworkStateTest::initTestCase()
+PASS   : NetworkStateTest::normalDisconnectRemovesDevice()
+PASS   : NetworkStateTest::silentUnresponsiveDeviceTimesOutAndUpdatesUI()
+PASS   : NetworkStateTest::wrongPongDoesNotKeepDeviceAlive()
+PASS   : NetworkStateTest::sameDeviceReconnectReplacesStaleSocket()
+PASS   : NetworkStateTest::healthyProbesAreNotTelemetryAndCommandsRemainRaw()
+PASS   : NetworkStateTest::legacyClientsOnlyReceiveBlankProbes()
+PASS   : NetworkStateTest::webIdleEmitsEventAndServerStopClearsState()
+PASS   : NetworkStateTest::cleanupTestCase()
+Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 1030ms
+********* Finished testing of NetworkStateTest *********
+<end of output>
+Test time =   1.05 sec
+----------------------------------------------------------
+Test Passed.
+"bridge_link_events" end time: Oct 31 20:52 KST
+"bridge_link_events" time elapsed: 00:00:01
+----------------------------------------------------------
+
+2/4 Testing: camera_usb_provision
+2/4 Test: camera_usb_provision
+Command: "/home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test"
+Directory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+"camera_usb_provision" start time: Oct 31 20:52 KST
+Output:
+----------------------------------------------------------
+********* Start testing of CameraProvisionTest *********
+Config: Using QtTest library 5.15.13, Qt 5.15.13 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 13.2.0), ubuntu 24.04
+PASS   : CameraProvisionTest::initTestCase()
+PASS   : CameraProvisionTest::storagePriorityAndOverwrite()
+PASS   : CameraProvisionTest::rejectsMalformedPackets()
+QWARN  : CameraProvisionTest::uiSendsAndUpdatesStoredSettings() This plugin does not support propagateSizeHints()
+PASS   : CameraProvisionTest::uiSendsAndUpdatesStoredSettings()
+PASS   : CameraProvisionTest::rejectsOtherDevices()
+PASS   : CameraProvisionTest::cleanupTestCase()
+Totals: 6 passed, 0 failed, 0 skipped, 0 blacklisted, 317ms
+********* Finished testing of CameraProvisionTest *********
+<end of output>
+Test time =   0.33 sec
+----------------------------------------------------------
+Test Passed.
+"camera_usb_provision" end time: Oct 31 20:52 KST
+"camera_usb_provision" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/4 Testing: esp32_link_frames
+3/4 Test: esp32_link_frames
+Command: "/usr/bin/python3" "/home/jdedu/physical-ai-vibe-platform/bridge-server/../esp32/tests/test_link_frames.py"
+Directory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+"esp32_link_frames" start time: Oct 31 20:52 KST
+Output:
+----------------------------------------------------------
+PASS: fragmented link ping -> ESP32 pong; no UART/OLED heartbeat leakage; raw command framing, spaces, overflow recovery.
+<end of output>
+Test time =   0.26 sec
+----------------------------------------------------------
+Test Passed.
+"esp32_link_frames" end time: Oct 31 20:52 KST
+"esp32_link_frames" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/4 Testing: bridge_ui_lifecycle
+4/4 Test: bridge_ui_lifecycle
+Command: "/home/jdedu/physical-ai-vibe-platform/bridge-server/build/phyvibe-bridge" "--smoke-test" "--port" "0" "--tcp-port" "0" "--host" "127.0.0.1"
+Directory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+"bridge_ui_lifecycle" start time: Oct 31 20:52 KST
+Output:
+----------------------------------------------------------
+NET server_started · HTTP/TCP 서버 시작
+SYS Listening: HTTP 33937, ESP32 TCP 43181
+NET server_stopped · HTTP/TCP 서버 중지
+SYS Server stopped; network connections closed
+NET server_started · HTTP/TCP 서버 시작
+SYS Listening: HTTP 45973, ESP32 TCP 38683
+NET server_stopped · HTTP/TCP 서버 중지
+SYS Server stopped; network connections closed
+UI tabs and start/stop/restart passed
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"bridge_ui_lifecycle" end time: Oct 31 20:52 KST
+"bridge_ui_lifecycle" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 31 20:52 KST

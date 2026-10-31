@@ -1,0 +1,6 @@
+bridge_network 8 0.0263762
+bridge_ui_lifecycle 21 0.00142849
+camera_usb_provision 8 0.0418698
+bridge_link_events 2 0.526205
+esp32_link_frames 1 0.263678
+---

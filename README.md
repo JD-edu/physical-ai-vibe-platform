@@ -2,9 +2,6 @@
 
 자연어로 피지컬 AI 대시보드를 만들고 micro:bit와 ESP32를 제어하는 브라우저 기반 스튜디오입니다. AI 생성은 사용자 PC에서 실행하는 **Qwen3 8B + llama.cpp**를 기본으로 사용합니다.
 
-## Protocol v1
-
-실행 ACK와 장치별 스킬 검증을 추가했습니다. [Protocol v1 규격과 첫 테스트](protocol/v1.md)를 참고하세요. Studio는 2.1.1, 독립 C++ 브릿지는 2.1.0입니다. microbit/ 확장 0.1.2은 Protocol v1 서보 명령과 실행 ACK 블록을 제공합니다. 기존 장치는 Legacy 프로필로 계속 사용할 수 있습니다.
 
 ## 가장 빠른 실행 순서
 

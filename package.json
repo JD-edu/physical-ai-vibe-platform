@@ -5,13 +5,14 @@
   "main": "electron/main.cjs",
   "scripts": {
     "start": "node scripts/desktop-cli.cjs electron .",
-    "test": "node tests/test_local_llm.cjs && node tests/test_generation_harness.cjs && node tests/test_studio_export.cjs && node tests/test_electron_architecture.cjs && node tests/test_protocol_v1.cjs && node tests/test_makecode_protocol.cjs",
+    "test": "node tests/test_local_llm.cjs && node tests/test_generation_harness.cjs && node tests/test_vision.cjs && node tests/test_studio_export.cjs && node tests/test_electron_architecture.cjs && node tests/test_makecode.cjs",
     "build:bridge": "bash scripts/build-bridge.sh",
     "pack": "node scripts/desktop-cli.cjs builder --linux --dir",
     "dist": "node scripts/desktop-cli.cjs builder --linux AppImage deb",
     "smoke": "node scripts/desktop-cli.cjs electron . --smoke-test",
-    "test:bridge": "ctest --test-dir physical/bridge-server/build --output-on-failure",
-    "bridge": "physical/bridge-server/build/phyvibe-bridge"
+    "test:vision:browser": "node tests/test_vision_browser.cjs",
+    "test:bridge": "ctest --test-dir bridge-server/build --output-on-failure",
+    "bridge": "bridge-server/build/phyvibe-bridge"
   },
   "repository": {
     "type": "git",
