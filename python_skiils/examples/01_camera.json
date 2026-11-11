@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "title": "camera",
+  "features": [
+    {
+      "kind": "camera",
+      "input": "configured"
+    }
+  ],
+  "unsupported": []
+}

@@ -1,0 +1,5 @@
+-r requirements.txt
+# 실제 검증 대상: Python 3.12 + TensorFlow CPU 2.17.1
+# macOS는 별도 CPU 패키지 대신 tensorflow를 설치합니다.
+tensorflow-cpu==2.17.1; platform_system != "Darwin"
+tensorflow==2.17.1; platform_system == "Darwin"

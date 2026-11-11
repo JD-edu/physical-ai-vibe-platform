@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "title": "servo_sensor_text",
+  "features": [
+    {
+      "kind": "servo",
+      "target": "servo",
+      "control": "slider",
+      "value": 90
+    },
+    {
+      "kind": "sensor",
+      "key": "temperature",
+      "view": "chart",
+      "unit": "°C"
+    },
+    {
+      "kind": "macro",
+      "title": "O 전송",
+      "effects": [
+        {
+          "kind": "transmit_text",
+          "text": "O"
+        }
+      ]
+    }
+  ],
+  "unsupported": []
+}

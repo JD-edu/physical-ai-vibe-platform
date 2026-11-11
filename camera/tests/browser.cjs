@@ -12,6 +12,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'phyvibe-camera-'));
 let chrome, ws, studio, camera;
 const sockets = new Set();
 let exported = '', cameraCount = 0, cameraActive = 0, dropOnce = false;
+const deliveredCommands=[];
 function serve(handler) {
  const server = http.createServer(handler);
  server.on('connection', s => {sockets.add(s);s.on('close',()=>sockets.delete(s));});
@@ -38,6 +39,8 @@ const delay = ms => new Promise(r=>setTimeout(r,ms));
  });
  const cameraURL=`http://127.0.0.1:${camera.address().port}/stream`;
  studio = await serve((req,res)=>{
+  if(req.url==='/api/status'){res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({connected_clients:1,message_sequence:0,message_history:[]}));}
+  if(req.url==='/api/command'){let body='';req.on('data',data=>body+=data);req.on('end',()=>{deliveredCommands.push(JSON.parse(body).command);res.setHeader('Content-Type','application/json');res.end(JSON.stringify({sent_count:1}));});return;}
   if(req.url==='/export.html'){res.setHeader('Content-Type','text/html');return res.end(exported);}
   const file=path.join(root,new URL(req.url,'http://local').pathname);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||fs.statSync(file).isDirectory()){res.writeHead(404);return res.end();}
@@ -78,7 +81,7 @@ const delay = ms => new Promise(r=>setTimeout(r,ms));
  await evaluate('document.querySelector("#esp32CameraPanel").open=true');await delay(100);
  await evaluate(`document.querySelector('#esp32CameraPreview [data-vision="start"]').click()`);
  await wait(`document.querySelector('#esp32CameraPreview .vision-progress').textContent.includes('연결 완료')`);
- await evaluate(`state.widgets=normalizeWidgets([{id:'direct-preview',type:'camera_stream',action:{skill:'camera_stream',source:{type:'esp32_stream',url:${JSON.stringify(cameraURL)}}}}]);renderWidgets();document.querySelector('#widgetGrid [data-vision="start"]').click()`);
+ await evaluate(`state.widgets=compileAppIntent({version:1,title:'카메라',features:[{kind:'camera'}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.legacy).widgets;renderWidgets();document.querySelector('#widgetGrid [data-vision="start"]').click()`);
  await wait(`document.querySelector('#widgetGrid .vision-progress').textContent.includes('연결 완료')`);
  await wait(`document.querySelector('#esp32CameraPreview .vision-connection').textContent.includes('다른 창')`);
  assert.equal(cameraActive,1,'Moving camera to generated widget must keep only one connection');
@@ -86,7 +89,7 @@ const delay = ms => new Promise(r=>setTimeout(r,ms));
  assert.equal(cameraActive,0);
  const stub=`globalThis.modelCalls={infer:0,fit:0,disposed:0};const tensor=(shape=[1,4])=>({shape,dispose(){modelCalls.disposed++}});const mockHead=()=>({inputs:[{shape:[null,4]}],outputs:[{shape:[null,2]}],add(){},compile(){},async fit(xs,ys,options){modelCalls.fit++;await options.callbacks.onEpochEnd(0,{loss:0.1})},predict:()=>({dataSync:()=>[0.95,0.05]}),async save(handler){return handler({modelTopology:{mock:true},weightSpecs:[],weightData:new ArrayBuffer(4)})},dispose(){}});globalThis.tf={io:{withSaveHandler:f=>f,fromMemory:x=>x},loadLayersModel:async()=>mockHead(),ready:async()=>{},tidy:f=>f(),nextFrame:async()=>{},concat:rows=>tensor([rows.length,4]),tensor1d:()=>tensor(),oneHot:()=>tensor(),layers:{dense:x=>x},sequential:()=>mockHead()};globalThis.mobilenet={load:async()=>({infer(input){if(input.width!==224||input.height!==224)throw Error('Wrong CNN dimensions');input.getContext('2d').getImageData(0,0,1,1);modelCalls.infer++;return tensor()},model:{dispose(){}}})};`;
  await evaluate(stub);
- await evaluate(`state.widgets=normalizeWidgets([{id:'camera-cnn',type:'classifier',action:{skill:'image_classifier',source:{type:'esp32_stream',url:${JSON.stringify(cameraURL)}},classes:['object','empty'],rules:[]}}]);state.generationValid=true;renderWidgets();document.querySelector('#widgetGrid [data-vision="start"]').click();`);
+ await evaluate(`state.widgets=compileAppIntent({version:1,title:'CNN',features:[{kind:'classifier',classes:['object','empty']}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.legacy).widgets;state.generationValid=true;renderWidgets();document.querySelector('#widgetGrid [data-vision="start"]').click();`);
  await wait(`document.querySelector('#widgetGrid .vision-progress').textContent.includes('준비 완료')`);
  for(const label of [0,1]){await evaluate(`document.querySelector('#widgetGrid [data-vision="sample"][data-class="${label}"]').click()`);await wait(`document.querySelector('#widgetGrid [data-count="${label}"]').textContent==='5장' && !document.querySelector('#widgetGrid [data-vision="reset"]').disabled`);}
  assert.equal(await evaluate('modelCalls.infer'),10);
@@ -127,7 +130,7 @@ const delay = ms => new Promise(r=>setTimeout(r,ms));
   await evaluate(`document.querySelector('[data-vision="predict"]').click()`);await wait(`/인식|불확실/.test(document.querySelector('.vision-result').textContent)`);
   await evaluate(`document.querySelector('[data-vision="stop"]').click()`);
   const savedModels=await evaluate('testVision.exportModels()');
-  assert(savedModels['camera-cnn'].weightData.length>100,'Export must include real trained weights');
+  assert(savedModels['feature-1'].weightData.length>100,'Export must include real trained weights');
   setExportedModels(savedModels);
   await cdp('Page.navigate',{url:origin+'/export.html'},sessionId);
   await wait('!!document.querySelector("[data-vision=start]")');
@@ -149,6 +152,25 @@ const delay = ms => new Promise(r=>setTimeout(r,ms));
  assert.equal(await evaluate(`document.querySelector('video').videoWidth>0 && document.querySelector('canvas').hidden`),true);
  await evaluate(`document.querySelector('[data-vision="stop"]').click()`);
  console.log('PASS: existing PC webcam path in standalone HTML.');
+ // Compile and export a camera remote, then exercise its real controls against a mock bridge.
+ await cdp('Page.navigate',{url:origin+'/webapp/index.html'},sessionId);
+ await wait('typeof compileAppIntent === "function" && typeof downloadProject === "function"');
+ await evaluate(`state.provider='demo';clearTimeout(qwenRetryTimer);document.querySelectorAll('dialog').forEach(d=>d.close());state.cameraUrl=${JSON.stringify(cameraURL)};state.bridgeUrl=${JSON.stringify(origin)};state.widgets=compileAppIntent({version:1,title:'카메라 리모컨',features:[{kind:'camera'},{kind:'motor',speedControl:'slider',directions:['forward','backward','left','right','stop']}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.legacy).widgets;state.generationValid=true;renderWidgets();`);
+ exported=await evaluate(`(async()=>{let saved;const old=URL.createObjectURL,click=HTMLAnchorElement.prototype.click;URL.createObjectURL=b=>{saved=b;return 'blob:test'};HTMLAnchorElement.prototype.click=()=>{};try{await downloadProject()}finally{URL.createObjectURL=old;HTMLAnchorElement.prototype.click=click}return await saved.text()})()`);
+ assert(!exported.includes('function compileAppIntent'),'Standalone must not depend on compiler or LLM');
+ await cdp('Page.navigate',{url:origin+'/export.html'},sessionId);
+ await wait(`document.querySelectorAll('#widgetGrid .widget').length===7`);
+ await evaluate(`document.querySelector('[data-vision="start"]').click();document.querySelector('#connect').click()`);
+ await wait(`document.querySelector('.vision-progress').textContent.includes('연결 완료') && document.querySelector('#status').textContent.includes('서버 연결 완료')`);
+ for(const speed of [0,27,80])for(const direction of ['forward','backward','left','right','stop']){
+   const previous=deliveredCommands.length;
+   await evaluate(`(()=>{const slider=document.querySelector('[data-control]');slider.value=${speed};slider.dispatchEvent(new Event('input',{bubbles:true}));const button=[...document.querySelectorAll('[data-actions]')].find(b=>JSON.parse(b.dataset.actions)[0].direction===${JSON.stringify(direction)});button.click()})()`);
+   for(let i=0;i<100&&deliveredCommands.length===previous;i++)await delay(50);
+   assert.equal(deliveredCommands.at(-1),`CMD:motor:${direction}:${direction==='stop'?0:speed}`);
+ }
+ await evaluate(`document.querySelector('[data-vision="stop"]').click();document.querySelector('#disconnect').click()`);
+ console.log('PASS: compiled standalone camera remote, 7 widgets, direct video plus mock bridge; slider 0/27/80 drives four directions and stop=0 without editor/LLM/compiler.');
+
  console.log('Screenshot: '+path.join(tmp,'cnn-preview.png'));
  console.log('PASS: real Chrome cross-origin fragmented MJPEG -> readable canvas, editor preview lifecycle, no relay/model for preview, mocked CNN sampling/training/prediction/live inference, standalone HTML direct camera, cleanup.');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{

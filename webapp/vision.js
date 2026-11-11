@@ -148,7 +148,7 @@ function normalizeCameraWidget(item) {
   if (item.action?.skill !== "camera_stream")
     throw new Error("camera_stream requires camera_stream action");
   const source = normalizeVisionSource(item.action.source);
-  if (source.type !== "esp32_stream") throw new Error("camera_stream requires esp32_stream source");
+
   return {
     id: item.id,
     type: "camera_stream",
@@ -349,7 +349,8 @@ function createVisionRuntime(send, savedModels = {}) {
       }
       if (disposed) return;
       if (previewOnly) {
-        status.textContent = "ESP32 영상 연결 완료";
+        status.textContent =
+          sourceType === "esp32_stream" ? "ESP32 영상 연결 완료" : "PC 웹캠 연결 완료";
         return;
       }
       status.textContent = "이미지 모델을 준비하는 중…";

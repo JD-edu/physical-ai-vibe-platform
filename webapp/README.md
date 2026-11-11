@@ -66,33 +66,50 @@ LLM 기본 URL은 `http://127.0.0.1:8080`입니다. 다른 포트는 AI 설정 �
 
 ## 생성 하네스
 
-Local Qwen은 실행 코드를 직접 작성하는 대신 지원하는 스킬로 JSON 계획을 생성합니다. Studio가 계획을 검증하고 위젯과 네트워크 동작으로 변환합니다.
+Local Qwen은 사용자 의도만 JSON으로 해석합니다. `intent.js`의 공통 계약과 컴파일러가 위젯·ID·슬라이더 참조를 만들고, 실행 검증층이 허용된 장치 명령을 구성합니다. LLM은 `widgets`, `id`, `skill`, `speedFrom`, `CMD:`를 작성하지 않습니다.
 
-| 스킬 | 용도 | 예시 |
-|---|---|---|
-| `display_sensor` | 센서 키에 연결한 metric/gauge/chart/alert | `{"skill":"display_sensor","key":"temperature"}` |
-| `send_text` | 버튼 클릭 시 문자열 그대로 전송 | `{"skill":"send_text","text":"a"}` |
-| `set_servo` | micro:bit 서보 제어 슬라이더, 0–180도 | `{"skill":"set_servo","target":"servo"}` |
-| `set_motor` | micro:bit 모터 제어 슬라이더, 0–80% | `{"skill":"set_motor"}` |
-
-버튼은 `actions` 배열에 `send_text` 스킬을 지정하고 순서대로 실행합니다. 다른 위젯은 `action`을 지정합니다. 문자열에는 접두사나 숫자를 추가하지 않습니다. 네트워크 전송 실패 시 남은 버튼 동작은 중지합니다. 전송 성공은 서버→ESP32 전송 큐잉을 뜻합니다.
-
-예시 요청: **버튼을 누르면 소문자 a 한 글자를 보내는 웹앱을 만들어줘.**
-
-```json
-{"title":"문자 전송","widgets":[{"id":"send-a","type":"button","title":"a 전송","actions":[{"skill":"send_text","text":"a"}]}]}
+```text
+자연어 → Qwen 의도 JSON → 의도 검증 → JavaScript 컴파일 → 실행 구성 검증 → 미리보기 / 독립 HTML
 ```
 
-지원하지 않는 스킬, 누락된 동작, 중복 ID 및 잘못된 제어 범위는 거절합니다. JSON 계획이 잘못되면 LLM에 검증 오류를 전달해 한 번 수정 요청하고, 다시 실패하면 생성 오류를 표시합니다. 지원 스킬은 스키마 탭에서도 확인할 수 있습니다. 이 검증은 계획의 구조를 검사하며 모든 자연어 요구사항의 의미 일치를 보장하지는 않습니다.
+| 의도 종류 | 의미 | JavaScript가 구성하는 UI |
+|---|---|---|
+| `camera` | 영상 보기, 입력 선택 | 시작·종료 버튼과 영상 화면 |
+| `classifier` | 클래스·신뢰도·결과 규칙·게임 | 영상·샘플 수집·학습·추론 |
+| `motor` | 방향 목록·속도·슬라이더 여부 | 속도 슬라이더, 방향/동작·정지 버튼, 정확한 참조 |
+| `servo` | 대상·각도 범위·슬라이더 또는 고정 각도 | 서보 슬라이더 또는 각도 버튼 |
+| `sensor` | 센서 키·표시 방법 | metric/gauge/chart/alert |
+| `macro` | 명시적으로 요청한 문자열 또는 순차 명령 묶음 | 허용된 효과를 순서대로 실행하는 버튼 |
 
-기존 다운로드 파일은 자동으로 갱신되지 않습니다. Studio를 새로고침하고 생성 후 웹앱을 다시 내보내세요.
+예를 들어 “이 카메라를 보면서 속도 슬라이더로 로봇 전진·후진·좌우회전을 조종하고 정지 버튼도 넣어 주세요”의 의도는 다음과 같습니다.
+
+```json
+{
+  "version": 1,
+  "title": "카메라 로봇 조종",
+  "features": [
+    {"kind": "camera", "input": "configured"},
+    {"kind": "motor", "speedControl": "slider", "speed": 50,
+     "directions": ["forward", "backward", "left", "right", "stop"]}
+  ],
+  "unsupported": []
+}
+```
+
+컴파일러가 카메라 1개, 공통 속도 슬라이더 1개, 방향 버튼 4개와 정지 버튼 1개를 구성합니다. 슬라이더 ID와 `speedFrom`을 모델이 생성하거나 추측하지 않습니다. 서로 다른 모터 조종 그룹도 컴파일러가 각 그룹의 참조를 연결합니다. 정지는 항상 속도 0이며 고정 속도 버튼은 다른 슬라이더에 자동 연결하지 않습니다.
+
+`configured`는 에디터에 설정한 카메라 또는 요청에 명시한 URL을 사용합니다. `webcam`은 PC 웹캠입니다. URL이 없는 카메라 미리보기에는 주소 입력란을 제공하며, 입력을 지정하지 않은 기존 CNN 흐름은 설정된 ESP32 주소가 없으면 웹캠을 사용합니다. 클래스별 장치 출력은 의도의 `deviceRules`에 지정하며 `effect`는 `transmit_text`, `motor_speed`, `drive`, `servo_angle`입니다. 분류 결과는 자동으로 화면에 표시되므로 화면 표시만 요청하면 `deviceRules`를 지정하지 않습니다. 실제 명령과 장치 프로필 권한은 JavaScript에서 검증합니다.
+
+계약은 `APP_INTENT_SCHEMA` 한 곳에서 모델 안내와 검증에 공통으로 사용합니다. 잘못된 의도는 일반 검증 오류로 한 번 수정 요청하고, 재실패하면 오류를 표시합니다. 미지원 기능은 `unsupported`로 보고하며 다른 앱으로 바꾸거나 조용히 누락하지 않습니다. 유효한 의도와 원래 자연어의 의미가 완전히 일치한다는 보장은 없으며, 기능 누락 여부는 시나리오 검사로 확인합니다.
+
+현재 최대 실행 위젯은 8개입니다. 더 많은 위젯이 필요한 의도는 일부 기능을 버리지 않고 오류를 표시합니다. 데모 모드는 LLM을 호출하지 않는 별도 로컬 예제 선택기이며, 선택한 예제도 같은 컴파일러를 사용합니다.
 
 검증 명령 (저장소 루트):
 
 ```bash
-node tests/test_generation_harness.cjs
-node tests/test_local_llm.cjs
-node tests/test_studio_export.cjs
+npm test
+npm run test:intent:qwen
+npm run test:vision:browser
 npm run test:bridge
 ```
 
@@ -100,9 +117,9 @@ Electron Studio도 C++ 브릿지를 포함하거나 자동 실행하지 않습�
 
 ## 카메라 분류 스킬과 가위바위보
 
-Qwen3는 JSON 앱 구성을 생성하고, 이미지 인식은 브라우저의 TensorFlow.js가 실행합니다. Qwen3에 이미지 입력을 보내거나 별도 비전 LLM을 실행할 필요가 없습니다. 고정된 MobileNet V2 CNN에서 이미지 특징을 추출하고, 사용자가 수집한 클래스별 샘플로 작은 신경망 분류기를 학습합니다.
+Qwen3는 클래스와 규칙을 포함한 의도를 생성하고, 이미지 인식은 브라우저의 TensorFlow.js가 실행합니다. Qwen3에 이미지 입력을 보내거나 별도 비전 LLM을 실행할 필요가 없습니다. 고정된 MobileNet V2 CNN에서 이미지 특징을 추출하고, 사용자가 수집한 클래스별 샘플로 작은 신경망 분류기를 학습합니다.
 
-재사용 가능한 브라우저 스킬은 `camera_capture`, `train_classifier`, `classify_image`, `evaluate_rules`입니다. Qwen은 이 흐름을 `image_classifier` 액션의 `classifier` 위젯으로 구성합니다. 클래스 이름, 신뢰도 기준, 클래스별 전송 규칙 또는 PC와 비교하는 승패 관계는 JSON 설정입니다. 새 클래스나 같은 방식의 게임마다 새 스킬을 작성할 필요가 없습니다. 클래스 규칙은 장치 프로필에서 허용한 `send_text`, `set_motor`, `drive_motor`, `set_servo`를 사용할 수 있습니다. 모터 속도(0–80), 방향, 서보 각도(0–180)는 검증된 고정값이며 명령 문자열은 JavaScript가 만듭니다. 임의 JavaScript와 `speedFrom` 규칙은 지원하지 않습니다.
+재사용 가능한 브라우저 스킬은 `camera_capture`, `train_classifier`, `classify_image`, `evaluate_rules`입니다. 컴파일러는 분류 의도를 `image_classifier` 액션의 `classifier` 위젯으로 구성합니다. 클래스 이름, 신뢰도 기준, 클래스별 전송 규칙 또는 PC와 비교하는 승패 관계는 JSON 설정입니다. 새 클래스나 같은 방식의 게임마다 새 스킬을 작성할 필요가 없습니다. 클래스 규칙은 장치 프로필에서 허용한 `send_text`, `set_motor`, `drive_motor`, `set_servo`를 사용할 수 있습니다. 모터 속도(0–80), 방향, 서보 각도(0–180)는 검증된 고정값이며 명령 문자열은 JavaScript가 만듭니다. 임의 JavaScript와 `speedFrom` 규칙은 지원하지 않습니다.
 
 1. 자신의 MakeCode 프로그램에 맞는 문자열 명령을 사용합니다.
 2. 다음 프롬프트를 입력합니다:
@@ -118,7 +135,7 @@ Qwen3는 JSON 앱 구성을 생성하고, 이미지 인식은 브라우저의 Te
 
 TensorFlow.js 4.22.0과 MobileNet 2.1.1 라이브러리 및 사전 학습된 모델은 필요할 때 다운로드합니다. 최초 실행에는 인터넷 접근이 필요합니다. 카메라 이미지와 수집한 특징은 서버나 Qwen에 업로드하지 않습니다. `카메라 끄기`, 위젯 제거, 페이지 종료 시 카메라 스트림을 정리합니다.
 
-사용자 정의 분류 예시 (`rules`와 `game` 중 하나를 사용):
+다음은 컴파일 후의 실행 구성 예시입니다. LLM에 요구하는 의도 JSON과는 구분합니다 (`rules`와 `game` 중 하나를 사용):
 
 ```json
 {
@@ -169,13 +186,11 @@ node camera/tests/browser.cjs
 
 ## 로봇 리모컨의 공통 속도 슬라이더
 
-방향 버튼의 `speedFrom`은 같은 계획에 포함된 `type: "control"`, `action: {skill: "set_motor"}` 위젯의 **id**를 참조합니다. 슬라이더가 하나뿐이고 Qwen이 존재하지 않는 참조 ID를 생성한 경우 실제 모터 슬라이더로 보정합니다. 여러 슬라이더 사이에서는 임의 선택하지 않으며, 실제 서보·센서 ID를 잘못 참조한 경우도 거부합니다. 정지는 항상 속도 0을 사용합니다.
-
-슬라이더를 요청했는데 누락된 계획은 수정 요청을 보냅니다. Qwen에 전체 리모컨(공통 슬라이더 + 네 방향 버튼 + 정지)의 생성 예시를 제공합니다.
+방향 버튼의 `speedFrom`은 의도 컴파일러가 직접 생성한 모터 슬라이더 ID를 참조합니다. 여러 슬라이더가 있어도 해당 조종 그룹에 연결하며, 존재하지 않는 ID를 추측하는 보정은 하지 않습니다. 고정 속도와 슬라이더 속도를 구분하고 정지는 항상 0으로 구성합니다. 자연어의 방향 단어나 부정 표현은 LLM이 해석하며 생성 후 정규식으로 재해석하지 않습니다.
 
 ```bash
 node camera/tests/motor_planner.cjs
-REAL_QWEN=1 node camera/tests/motor_planner.cjs
+npm run test:intent:qwen
 ```
 
 두 번째 명령은 실행 중인 로컬 Qwen 서버(`http://127.0.0.1:8080`)에서 실제 생성까지 확인합니다.

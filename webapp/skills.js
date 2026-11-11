@@ -3,10 +3,10 @@
  *
  * skills: 장치에 명령을 보내거나 센서 값을 표시하는 기능.
  * browserSkills: 카메라 입력과 브라우저 안에서 수행하는 이미지 학습·분류.
- * profiles: 선택한 장치에서 LLM이 사용할 수 있는 스킬의 범위.
+ * profiles: 선택한 장치에서 컴파일러가 허용할 스킬의 범위.
  *
- * description / arguments는 Qwen에 전달하는 계약입니다. 변경 시
- * app.js와 vision.js의 인자 검증 및 독립 HTML 실행도 함께 확인합니다.
+ * 이 카탈로그는 실행 스킬 계약입니다. LLM의 의도 계약과 빌더는 intent.js에 있습니다.
+ * 변경 시 인자 검증·의도 컴파일·독립 HTML 실행을 함께 확인합니다.
  */
 // Supported generation skills and device capabilities.
 const SKILL_CATALOG = Object.freeze({
@@ -56,7 +56,8 @@ const SKILL_CATALOG = Object.freeze({
     // 영상 표시만 필요한 경우의 스킬입니다. CNN 학습은 수행하지 않습니다.
     camera_stream: {
       widgetType: "camera_stream",
-      description: "Display a direct ESP32 MJPEG camera preview without a classifier or PC relay",
+      description:
+        "Camera widget with built-in streaming start button, stop button and video display. Use ONE widget {type:camera_stream,action:{skill:camera_stream,source:{type:esp32_stream,url:...}}}; do not create separate camera button widgets or device commands. Can also combine with requested motor controls.",
       arguments: {
         source:
           "{type:esp32_stream,url:http://CAMERA_IP/stream}; use configured camera URL, never invent an IP",
@@ -103,7 +104,7 @@ const SKILL_CATALOG = Object.freeze({
       },
     },
   },
-  // 프로필은 LLM이 선택할 수 있는 장치 스킬을 제한합니다.
+  // 프로필은 의도 컴파일러가 사용할 수 있는 장치 스킬을 제한합니다.
   profiles: {
     legacy: {
       label: "micro:bit",

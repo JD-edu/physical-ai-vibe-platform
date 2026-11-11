@@ -2,8 +2,8 @@
  * PhyVibe Studio의 생성 하네스와 화면 실행 코드.
  *
  * 주요 흐름:
- * 1. Qwen 연결을 확인하고 사용자 요청을 JSON 위젯 계획으로 받습니다.
- * 2. 스킬, 장치 명령, 모터 슬라이더 참조와 카메라 입력을 검증합니다.
+ * 1. Qwen 연결을 확인하고 사용자 요청을 JSON 의도로 받습니다.
+ * 2. intent.js가 의도를 검증하고 위젯·ID·참조를 구성합니다.
  * 3. 검증된 위젯을 표시하고 브릿지 또는 ESP32 카메라에 연결합니다.
  * 4. 실행에 필요한 함수와 설정을 독립 HTML 웹앱에 포함합니다.
  *
@@ -116,9 +116,9 @@ function updateProviderStatus() {
   const label = $("#activeProviderLabel");
   label.textContent =
     state.provider === "qwen"
-      ? `Harness 3.2 · Local Qwen · ${QWEN_BASE_URL} · ${state.qwenModelId ? "연결 완료" : "연결 대기"}`
+      ? `Harness 4.0 · Local Qwen · ${QWEN_BASE_URL} · ${state.qwenModelId ? "연결 완료" : "연결 대기"}`
       : state.provider === "demo"
-        ? "Harness 3.2 · 데모 모드 · LLM 요청 없음"
+        ? "Harness 4.0 · 데모 모드 · LLM 요청 없음"
         : `${state.provider} · 웹앱 생성 미지원`;
 }
 
@@ -192,53 +192,11 @@ function renderStudioCamera() {
   ]);
 }
 
-// ESP32 카메라 요청에서 명시한 주소 또는 에디터에 저장된 주소를 선택합니다.
-function requestedCameraSource(prompt) {
-  const visionRequest = /카메라|영상|이미지|cnn|비전|camera|image|classif|vision/i.test(prompt);
-  if (!visionRequest) return null;
-  if (/웹캠|webcam|(?:pc|노트북|내장)\s*카메라/i.test(prompt)) return { type: "webcam" };
-  const explicitESP32 = /esp32|와이파이|wifi|네트워크/i.test(prompt);
-  const match = prompt.match(/https?:\/\/[^\s<>"']+/i);
-  if (explicitESP32 || match || state.cameraUrl) {
-    return normalizeVisionSource({ type: "esp32_stream", url: match ? match[0] : state.cameraUrl });
-  }
-  return null;
-}
-
-// 카메라 요청의 종류와 주소가 실제 생성 계획에도 반영됐는지 검사합니다.
-function validateCameraPlan(widgets, prompt, source) {
-  const visionRequested = widgets.some((w) => ["classifier", "camera_stream"].includes(w.type));
-  if (
-    visionRequested &&
-    /\b(?:ViT|YOLO|OCR)\b|객체\s*검출|바운딩\s*박스|분할\s*마스크/i.test(prompt)
-  ) {
-    throw new Error(
-      "현재 비전 스킬은 MobileNet CNN 이미지 분류를 지원합니다. ViT/객체 검출/OCR/분할은 아직 지원하지 않습니다.",
-    );
-  }
-  if (!source) return widgets;
-  const cameras = widgets.filter((w) => ["classifier", "camera_stream"].includes(w.type));
-  if (!cameras.length)
-    throw new Error("The ESP32 camera request requires a camera_stream or classifier widget");
-  if (/cnn|분류|인식|학습|classif/i.test(prompt) && !cameras.some((w) => w.type === "classifier"))
-    throw new Error(
-      "The user requested CNN classification, not only a camera preview; use image_classifier",
-    );
-  for (const widget of cameras) {
-    if (
-      widget.action.source.type !== source.type ||
-      (source.type === "esp32_stream" && widget.action.source.url !== source.url)
-    )
-      throw new Error(
-        "Use the configured/requested ESP32 source URL exactly; do not invent a camera address",
-      );
-  }
-  return widgets;
-}
-
-// LLM의 JSON을 실행 가능한 위젯 설정으로 정규화하고 허용된 스킬만 통과시킵니다.
-function normalizeWidgets(items, motorRequest = false, cameraSource = null) {
-  const profile = SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.legacy;
+// 컴파일러가 만든 실행 구성을 검증하고 허용된 스킬의 명령을 만듭니다.
+function normalizeWidgets(
+  items,
+  profile = SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.legacy,
+) {
   const allowedTypes = new Set([
     "metric",
     "gauge",
@@ -264,18 +222,9 @@ function normalizeWidgets(items, motorRequest = false, cameraSource = null) {
       throw new Error(`widgets[${index}]: unique English id required`);
     ids.add(item.id.toLowerCase());
     if (["classifier", "camera_stream"].includes(item.type)) {
-      const source = item.action?.source;
-      if (cameraSource && source && source.type !== cameraSource.type)
-        throw new Error(`The requested camera source is ${cameraSource.type}; preserve that input`);
-      const action = {
-        ...item.action,
-        ...(!source && cameraSource ? { source: cameraSource } : {}),
-      };
-      if (cameraSource && action.source?.type === "esp32_stream" && !action.source.url)
-        action.source = cameraSource;
       return item.type === "classifier"
-        ? normalizeVisionWidget({ ...item, action }, profile)
-        : normalizeCameraWidget({ ...item, action });
+        ? normalizeVisionWidget(item, profile)
+        : normalizeCameraWidget(item);
     }
     const widget = {
       id: item.id,
@@ -286,16 +235,14 @@ function normalizeWidgets(items, motorRequest = false, cameraSource = null) {
       unit: String(item.unit || ""),
       min: Number.isFinite(item.min) ? item.min : 0,
       max: Number.isFinite(item.max) ? item.max : 100,
-      threshold: Number(item.threshold) || 10,
+      threshold: Number.isFinite(item.threshold) ? item.threshold : 10,
       wide: Boolean(item.wide),
       points: Array.isArray(item.points)
         ? item.points.filter(Number.isFinite).slice(0, 20)
         : undefined,
     };
     if (item.type === "button") {
-      // Qwen may wrap the same allowed skills in action.skills or a single action.
-      const actions =
-        item.actions ?? item.action?.skills ?? (item.action?.skill ? [item.action] : undefined);
+      const actions = item.actions;
       if (!Array.isArray(actions) || !actions.length || actions.length > 8)
         throw new Error(`${item.id}: button requires 1–8 actions`);
       widget.actions = actions.map((action) => {
@@ -328,17 +275,19 @@ function normalizeWidgets(items, motorRequest = false, cameraSource = null) {
                 : `CMD:motor:${action.speed}`,
           };
         }
-        if (motorRequest && action?.skill === "send_text") {
-          const match =
-            typeof action.text === "string" && action.text.match(/^CMD:motor:(0|[1-9][0-9]?)$/);
-          if (!match || Number(match[1]) > 80)
-            throw new Error(
-              `${item.id}: motor buttons must use set_motor with speed 0..80; stop speed is 0. Do not send arbitrary stop/action text.`,
-            );
+        if (action?.skill === "set_servo") {
+          if (
+            !["servo", "valve", "mouth"].includes(action.target) ||
+            !Number.isInteger(action.angle) ||
+            action.angle < 0 ||
+            action.angle > 180
+          )
+            throw new Error(`${item.id}: servo button requires supported target and angle 0..180`);
           return {
-            skill: "set_motor",
-            speed: Number(match[1]),
-            text: `CMD:motor:${Number(match[1])}`,
+            skill: "set_servo",
+            target: action.target,
+            angle: action.angle,
+            text: `CMD:${action.target}:${action.angle}`,
           };
         }
         if (
@@ -403,73 +352,15 @@ function normalizeWidgets(items, motorRequest = false, cameraSource = null) {
     }
     return widget;
   });
-  // 2차 검사: 모든 위젯이 만들어진 뒤 버튼과 모터 슬라이더의 참조를 연결합니다.
+  // 2차 검사: 컴파일러가 연결한 모터 슬라이더 참조가 유효한지 확인합니다.
   const motorSliders = widgets.filter(
     (w) => w.type === "control" && w.action?.skill === "set_motor",
   );
   for (const widget of widgets) {
     for (const action of widget.actions || []) {
       if (!["set_motor", "drive_motor"].includes(action.skill)) continue;
-      // A stop action never reads the slider. Other direction buttons may start at 0.
-      const movement = action.skill === "drive_motor" && action.direction !== "stop";
-      const needsSlider = movement || action.speed > 0;
-      if (!action.speedFrom && needsSlider && motorSliders.length === 1)
-        action.speedFrom = motorSliders[0].id;
-      if (action.speedFrom && !motorSliders.some((w) => w.id === action.speedFrom)) {
-        const referenced = widgets.find((w) => w.id === action.speedFrom);
-        // Qwen sometimes invents a reference ID while creating exactly one actual
-        // motor slider. There is only one possible motor source in this case.
-        // Never redirect an existing servo/sensor ID, or guess between two sliders.
-        if (!referenced && motorSliders.length === 1) action.speedFrom = motorSliders[0].id;
-        else
-          throw new Error(
-            `${widget.id}: speedFrom "${action.speedFrom}" must reference a set_motor control widget. Available motor slider IDs: ${motorSliders.map((w) => w.id).join(", ") || "none; add a control widget with action {skill:'set_motor'}"}`,
-          );
-      }
-      if (!action.speedFrom && needsSlider && motorSliders.length > 1)
-        throw new Error(
-          `${widget.id}: specify speedFrom to select a motor slider: ${motorSliders.map((w) => w.id).join(", ")}`,
-        );
-    }
-  }
-  return widgets;
-}
-
-// Require requested steering directions; reject plans that reduce all buttons to speed.
-// 사용자가 요청한 방향 버튼과 모터 속도 슬라이더의 누락을 검사합니다.
-function validateDrivePlan(widgets, prompt) {
-  const requests = [
-    [/전진|전지(?=\s*후진)|forward/i, "forward"],
-    [/후진|backward|reverse/i, "backward"],
-    [/좌회전|좌우회전|왼쪽|turn left/i, "left"],
-    [/우회전|좌우회전|오른쪽|turn right/i, "right"],
-    [/정지|stop/i, "stop"],
-  ];
-  if (!/모터|motor|로봇|robot|주행|전진|후진/i.test(prompt)) return widgets;
-  if (/슬라이[더드]|slider/i.test(prompt)) {
-    const sliders = widgets.filter((w) => w.type === "control" && w.action?.skill === "set_motor");
-    if (!sliders.length)
-      throw new Error(
-        "Motor speed slider requested: add a control widget with action {skill:'set_motor'} and make each movement button speedFrom its exact id",
-      );
-  }
-  for (const [pattern, direction] of requests) {
-    if (
-      pattern.test(prompt) &&
-      !widgets.some((w) =>
-        [...(w.actions || []), ...(w.type === "classifier" ? w.action.rules : [])].some(
-          (a) => a.skill === "drive_motor" && a.direction === direction,
-        ),
-      )
-    ) {
-      if (
-        direction === "stop" &&
-        !/전진|후진|좌회전|우회전|forward|backward|turn left|turn right/i.test(prompt)
-      )
-        continue;
-      throw new Error(
-        `Requested ${direction} needs a drive_motor button with direction '${direction}', not set_motor speed only`,
-      );
+      if (action.speedFrom && !motorSliders.some((w) => w.id === action.speedFrom))
+        throw new Error(`${widget.id}: invalid motor slider reference ${action.speedFrom}`);
     }
   }
   return widgets;
@@ -497,40 +388,16 @@ function resolveButtonCommands(actions, widgets) {
   });
 }
 
-// 허용 스킬과 예시를 Qwen에 전달하고, 검증 실패 시 한 번 수정 요청을 보냅니다.
+// LLM은 의도만 해석합니다. UI와 명령은 intent.js의 컴파일러가 구성합니다.
 async function generateWithQwen(prompt) {
   if (!state.qwenModelId && !(await checkQwenConnection()))
     throw new Error("Qwen3 8B에 연결할 수 없습니다.");
   const profile = SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.legacy;
-  const availableSkills = {
-    ...Object.fromEntries(profile.skills.map((id) => [id, HARNESS_SKILLS[id]])),
-    ...Object.fromEntries(
-      Object.entries(SKILL_CATALOG.browserSkills).filter(([, skill]) => !skill.internal),
-    ),
-  };
-  const cameraSource = requestedCameraSource(prompt);
-  // 이 프롬프트는 실행 코드가 아닌 JSON 설정만 생성하도록 모델을 제한합니다.
-  const system = `Device profile: ${JSON.stringify(profile)}. Only use its listed skills, servoTargets, sensorKeys and textCommands when present. Send literal command text.
-You are PHYVIBE's network webapp planner. Return JSON only; do not generate executable code. Use only the supplied skills and their arguments: ${JSON.stringify(availableSkills)}.
-Button example (copy this structure for literal text requests): {"title":"Send a","widgets":[{"id":"send-a","type":"button","title":"Send a","actions":[{"skill":"send_text","text":"a"}]}]}.
-Motor speed slider: type "control", action {"skill":"set_motor"}, integer min 0/max 80/value 50. Direction buttons: type "button", actions [{"skill":"drive_motor","direction":"forward|backward|left|right","speedFrom":"EXACT_SLIDER_ID"}]. speedFrom is the actual slider widget id (case-sensitive), never the skill name, title or variable name. Always include the referenced control widget in the same widgets array. For direction buttons without a slider, use fixed speed 0..80 instead. Stop is always {"skill":"drive_motor","direction":"stop","speed":0} with no speedFrom. Use "set_motor" buttons only for plain speed control, not directional movement. Never invent stop/action/start text commands. Direction buttons form a cross automatically. Korean 전지후진 means 전진/후진 here; 좌우회전 means both left and right.
-Complete robot remote example with ONE shared speed slider (copy the structure; all speedFrom values equal the slider id): {"title":"Robot remote","widgets":[{"id":"motor-speed","type":"control","title":"Motor speed","min":0,"max":80,"value":50,"action":{"skill":"set_motor"}},{"id":"forward","type":"button","title":"전진","actions":[{"skill":"drive_motor","direction":"forward","speedFrom":"motor-speed"}]},{"id":"backward","type":"button","title":"후진","actions":[{"skill":"drive_motor","direction":"backward","speedFrom":"motor-speed"}]},{"id":"left","type":"button","title":"좌회전","actions":[{"skill":"drive_motor","direction":"left","speedFrom":"motor-speed"}]},{"id":"right","type":"button","title":"우회전","actions":[{"skill":"drive_motor","direction":"right","speedFrom":"motor-speed"}]},{"id":"stop","type":"button","title":"정지","actions":[{"skill":"drive_motor","direction":"stop","speed":0}]}]}.
-For plain motor speed control, use set_motor on the slider and {"skill":"set_motor","speedFrom":"EXACT_SLIDER_ID"} on a separate run button. A plain speed stop button uses {"skill":"set_motor","speed":0}. Runtime generates CMD:motor:<speed> or CMD:motor:<direction>:<speed>, always using the current slider value on click.
-Sensor example: {"title":"Temperature","widgets":[{"id":"temperature","type":"metric","title":"Temperature","action":{"skill":"display_sensor","key":"temperature"},"value":0,"unit":"°C"}]}.
-${profile.skills.includes("set_servo") ? 'Control example: {"title":"Servo","widgets":[{"id":"servo","type":"control","title":"Servo","action":{"skill":"set_servo","target":"servo"},"min":0,"max":180,"value":90}]} .' : "This profile does not support control widgets."}
-ESP32 camera access is direct from this browser; NEVER create a PC video relay or send frames through the motor bridge. Configured camera source: ${JSON.stringify(cameraSource || (state.cameraUrl ? { type: "esp32_stream", url: state.cameraUrl } : { type: "webcam" }))}. Preserve the requested URL; do not invent an IP. For ESP32 CNN/classification use type classifier with action image_classifier and source:{type:"esp32_stream",url:"..."}. For video display only use type camera_stream, action:{skill:"camera_stream",source:{type:"esp32_stream",url:"..."}}. If the URL is unknown use an empty string; the user enters it in the widget. A CNN widget includes sample collection, MobileNet feature extraction, local head training, single or continuous classification. Merely displaying video does not classify it.
-Camera apps use a classifier widget; browser skills are available on every profile, but every rule/game text must obey the device profile's send_text restrictions. Do not generate custom JavaScript or claim text Qwen sees images. The browser handles CNN training and inference.
-Classifier example: {"title":"Image classifier","widgets":[{"id":"camera","type":"classifier","title":"My classifier","action":{"skill":"image_classifier","classes":["open","closed"],"confidence":0.8,"rules":[]}}]}.
-Rock-paper-scissors example (use for Korean 가위바위보 or English rock paper scissors requests): {"title":"가위바위보","widgets":[{"id":"hand-game","type":"classifier","title":"카메라 가위바위보","action":{"skill":"image_classifier","classes":["rock","paper","scissors"],"confidence":0.8,"game":{"beats":[["rock","scissors"],["scissors","paper"],["paper","rock"]],"winText":"O","lossText":"x","drawText":""}}}]}.
-Use classes requested by the user, and define beats with EXACT matching labels. Only include output texts the user requests; no transmission for empty texts. Uppercase O and lowercase x must be preserved. For a generic classifier, use custom classes and optional label rules. Rules may use send_text with exact text, set_motor with integer speed 0..80, drive_motor with direction plus speed 0..80, or set_servo with target and integer angle 0..180. Rules use fixed validated values, never speedFrom. Example: {label:"defect",skill:"drive_motor",direction:"stop",speed:0}. Device rules do not require extra manual buttons. Only MobileNet CNN image classification is implemented; do not claim ViT, YOLO, OCR, detection boxes or segmentation. Camera-only/CNN-only applications run without the motor bridge. Trained classifiers can be included in standalone HTML by Studio export. For unsupported operations, explain failure rather than substitute unrelated sensor widgets.
-Optional widget fields: icon, value, unit, min, max, threshold, wide, points.
-Create 1–8 widgets. metric/gauge/chart/alert must have action display_sensor. control must have action set_servo with target or set_motor. button must have actions:[{"skill":"send_text","text":"a"}] for literal text or actions:[{"skill":"set_motor","speed":50}] for motor speed or actions:[{"skill":"drive_motor","direction":"forward","speed":50}] for directional movement instead of action; actions execute in order. For a request to send literal 'a' on click, make a button whose send_text text is exactly "a". Never add CMD prefixes, numeric values, or newlines to literal text. Keep explicit user sensor keys and payloads exactly. Do not substitute a slider for a requested button.
-The browser communicates with an HTTP bridge over Wi-Fi/Ethernet. ESP32 bridges Wi-Fi; micro:bit handles physical control and is programmed separately in MakeCode. No serial/USB or provisioning. /no_think`;
+  const context = appIntentContext(prompt, state.cameraUrl);
   const messages = [
-    { role: "system", content: system },
+    { role: "system", content: appIntentSystemPrompt(profile, context) },
     { role: "user", content: prompt },
   ];
-  // 최초 응답이 검증을 통과하지 못하면 오류를 첨부해 한 번만 재요청합니다.
   for (let attempt = 0; attempt < 2; attempt++) {
     const response = await fetch(`${QWEN_BASE_URL}/v1/chat/completions`, {
       method: "POST",
@@ -548,29 +415,15 @@ The browser communicates with an HTTP bridge over Wi-Fi/Ethernet. ESP32 bridges 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
     try {
-      const result = extractJson(content);
-      return {
-        title: String(result.title || "피지컬 AI 대시보드"),
-        widgets: validateCameraPlan(
-          validateDrivePlan(
-            normalizeWidgets(
-              result.widgets,
-              /모터|motor|팬|fan|전진|후진|주행/i.test(prompt),
-              cameraSource,
-            ),
-            prompt,
-          ),
-          prompt,
-          cameraSource,
-        ),
-      };
+      return compileAppIntent(extractJson(content), context, profile);
     } catch (error) {
-      if (attempt === 1) throw new Error(`생성 하네스 검증 실패: ${error.message}`);
+      if (error.name === "UnsupportedIntentError") throw error;
+      if (attempt === 1) throw new Error(`생성 의도 검증 실패: ${error.message}`);
       messages.push(
         { role: "assistant", content },
         {
           role: "user",
-          content: `Your plan failed validation: ${error.message}. Correct the JSON using only the supported skills. Preserve the original user's literal payloads and sensor keys. Return the entire corrected plan.`,
+          content: `Intent validation failed: ${error.message}. Return the complete corrected intent JSON using the schema. Preserve all requested capabilities and literal values. Do not return widgets or implementation fields.`,
         },
       );
     }
@@ -709,216 +562,78 @@ function appendMessage(role, text, typing = false) {
   return article;
 }
 
-// 데모 모드의 로컬 규칙입니다. 이 경로는 LLM에 요청하지 않습니다.
+// 데모만 로컬 키워드로 예제를 선택합니다. 실제 LLM 경로와는 별개입니다.
+// 데모의 UI와 명령도 같은 의도 컴파일러를 사용합니다.
 function widgetsFromPrompt(prompt) {
-  const p = prompt.toLowerCase();
-  const widgets = [];
-  const source = requestedCameraSource(prompt);
-  if (source) {
-    if (/분류|인식|cnn|classif/i.test(prompt))
-      return [
-        normalizeVisionWidget(
-          {
-            id: "esp32-classifier",
-            type: "classifier",
-            action: {
-              skill: "image_classifier",
-              source,
-              classes: ["class-a", "class-b"],
-              rules: [],
-            },
-          },
-          SKILL_CATALOG.profiles[state.deviceProfile],
-        ),
-      ];
-    return [
-      normalizeCameraWidget({
-        id: "esp32-camera",
-        type: "camera_stream",
-        action: { skill: "camera_stream", source },
-      }),
-    ];
+  const features = [];
+  if (/가위\s*바위\s*보|rock.*scissor/i.test(prompt)) {
+    features.push({
+      kind: "classifier",
+      classes: ["rock", "paper", "scissors"],
+      game: {
+        beats: [
+          ["rock", "scissors"],
+          ["scissors", "paper"],
+          ["paper", "rock"],
+        ],
+        winText: "O",
+        lossText: "x",
+        drawText: "",
+      },
+    });
+  } else if (/카메라|영상|이미지|cnn|camera|classif/i.test(prompt)) {
+    const feature = /분류|인식|cnn|classif/i.test(prompt)
+      ? { kind: "classifier", classes: ["class-a", "class-b"] }
+      : { kind: "camera" };
+    if (/웹캠|webcam|pc\s*카메라/i.test(prompt)) feature.input = "webcam";
+    features.push(feature);
   }
-  if (/가위\s*바위\s*보|rock[\s,-]*(?:paper|scissor)|rock.*scissor/i.test(prompt))
-    return [
-      normalizeVisionWidget(
-        {
-          id: "hand-game",
-          type: "classifier",
-          title: "카메라 가위바위보",
-          action: {
-            skill: "image_classifier",
-            classes: ["rock", "paper", "scissors"],
-            confidence: 0.8,
-            game: {
-              beats: [
-                ["rock", "scissors"],
-                ["scissors", "paper"],
-                ["paper", "rock"],
-              ],
-              winText: "O",
-              lossText: "x",
-              drawText: "",
-            },
-          },
-        },
-        SKILL_CATALOG.profiles[state.deviceProfile],
-      ),
-    ];
-  if (/화분|토양|soil|급수/.test(p)) {
-    widgets.push({
-      id: "soil",
-      type: "gauge",
-      title: "토양 수분",
-      icon: "🌱",
-      value: 24,
-      unit: "%",
-      min: 0,
-      max: 100,
-      threshold: 30,
-      pin: "P1",
-    });
-    widgets.push({
-      id: "valve",
-      type: "control",
-      title: "급수 밸브",
-      icon: "💧",
-      value: 0,
-      unit: "°",
-      min: 0,
-      max: 180,
-      pin: "P0",
-      command: "CMD:valve",
-    });
-  }
-  if (/터틀|자율주행|좌우 모터/.test(p)) {
-    widgets.push({
-      id: "sonar",
-      type: "alert",
-      title: "전방 거리",
-      icon: "◉",
-      value: 42,
-      unit: "cm",
-      threshold: 15,
-      min: 0,
-      max: 100,
-      pin: "P2",
-    });
-    widgets.push({
-      id: "motor",
-      type: "control",
-      title: "주행 속도",
-      icon: "🐢",
-      value: 50,
-      unit: "%",
-      min: 0,
-      max: 80,
-      action: { skill: "set_motor" },
-      command: "CMD:motor",
-    });
-  }
-  if (/온도|온습도|temperature/.test(p))
-    widgets.push({
-      id: "temperature",
-      type: "metric",
-      title: "실내 온도",
-      icon: "🌡",
-      value: 24.6,
-      unit: "°C",
-      min: 0,
-      max: 40,
-      trend: "+0.4°C",
-      pin: "P0",
-    });
-  if (/습도|온습도|humidity/.test(p))
-    widgets.push({
-      id: "humidity",
-      type: "gauge",
-      title: "상대 습도",
-      icon: "◌",
-      value: 58,
-      unit: "%",
-      min: 0,
-      max: 100,
-      pin: "P1",
-    });
-  if (/거리|초음파|접근/.test(p))
-    widgets.push({
-      id: "distance",
-      type: "alert",
-      title: "접근 감지",
-      icon: "◉",
-      value: 34,
-      unit: "cm",
-      threshold: 10,
-      min: 0,
-      max: 100,
-      pin: "P2",
-    });
-  if (/모터|팬|motor/.test(p) && !widgets.some((widget) => widget.id === "motor"))
-    widgets.push({
-      id: "motor",
-      type: "control",
-      title: "DC 모터 속도",
-      icon: "⚙",
-      value: 50,
-      unit: "%",
-      min: 0,
-      max: 80,
-      pin: "micro:bit",
-      action: { skill: "set_motor" },
-      command: "CMD:motor",
-    });
-  if (/서보|servo/.test(p))
-    widgets.push({
-      id: "servo",
-      type: "control",
-      title: "서보 각도",
-      icon: "↻",
-      value: 90,
-      unit: "°",
-      min: 0,
-      max: 180,
-      pin: "P0",
-    });
-  if (/조도|빛|light/.test(p))
-    widgets.push({
-      id: "light",
-      type: "metric",
-      title: "주변 조도",
-      icon: "☀",
-      value: 72,
-      unit: "%",
-      min: 0,
-      max: 100,
-      pin: "P1",
-    });
-  if (/차트|그래프|변화|모니터/.test(p))
-    widgets.push({
-      id: "chart",
-      type: "chart",
+  const examples = [
+    [
+      /화분|토양|soil|급수/i,
+      { kind: "sensor", key: "soil", title: "토양 수분", view: "gauge", unit: "%", threshold: 30 },
+    ],
+    [
+      /온도|온습도|temperature/i,
+      { kind: "sensor", key: "temperature", title: "실내 온도", unit: "°C", max: 40 },
+    ],
+    [
+      /습도|온습도|humidity/i,
+      { kind: "sensor", key: "humidity", title: "상대 습도", view: "gauge", unit: "%" },
+    ],
+    [
+      /거리|초음파|접근|터틀/i,
+      {
+        kind: "sensor",
+        key: "distance",
+        title: "전방 거리",
+        view: "alert",
+        unit: "cm",
+        threshold: 15,
+      },
+    ],
+    [/조도|빛|light/i, { kind: "sensor", key: "light", title: "주변 조도", unit: "%" }],
+    [/모터|팬|motor|터틀/i, { kind: "motor", speedControl: "slider", speed: 50 }],
+    [/서보|servo/i, { kind: "servo", target: "servo", control: "slider", value: 90 }],
+    [
+      /화분|토양|soil|급수/i,
+      { kind: "servo", target: "valve", title: "급수 밸브", control: "slider", value: 0 },
+    ],
+  ];
+  for (const [pattern, feature] of examples) if (pattern.test(prompt)) features.push(feature);
+  if (/차트|그래프|변화|모니터/i.test(prompt))
+    features.push({
+      kind: "sensor",
+      key: features.find((f) => f.kind === "sensor")?.key || "sensor",
+      view: "chart",
       title: "센서 변화",
-      icon: "⌁",
-      value: 24.6,
-      unit: "",
-      wide: true,
-      points: [20, 24, 22, 29, 26, 33, 31, 38],
     });
-  return widgets.length
-    ? widgets
-    : [
-        {
-          id: "sensor",
-          type: "metric",
-          title: "센서 데이터",
-          icon: "◇",
-          value: 42,
-          unit: "",
-          min: 0,
-          max: 100,
-          pin: "P0",
-        },
-      ];
+  if (!features.length) features.push({ kind: "sensor", key: "sensor", title: "센서 데이터" });
+  return compileAppIntent(
+    { version: 1, title: "데모", features },
+    appIntentContext(prompt, state.cameraUrl),
+    SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.legacy,
+  ).widgets;
 }
 
 // 생성 버튼의 전체 흐름을 처리하고 성공한 계획만 내보내기 가능 상태로 만듭니다.
@@ -1302,7 +1017,7 @@ async function downloadProject() {
   const project = {
     version: 3,
     visionModels,
-    harnessVersion: "3.2",
+    harnessVersion: "4.0",
     name: $("#projectName").value,
     title: $("#dashboardTitle").textContent,
     network: { transport: "http", bridgeUrl: state.bridgeUrl, deviceProfile: state.deviceProfile },

@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "skills": {
+    "display_sensor": {
+      "description": "Display incoming DATA:key:value or sensor JSON",
+      "arguments": {
+        "key": "sensor key"
+      }
+    },
+    "send_text": {
+      "description": "Send exact literal text to micro:bit",
+      "arguments": {
+        "text": "1–256 single-line characters; preserve case/spaces"
+      }
+    },
+    "set_servo": {
+      "description": "Slider sends CMD:target:angle to micro:bit",
+      "arguments": {
+        "target": "servo, valve, or mouth",
+        "range": "integer 0..180"
+      }
+    },
+    "drive_motor": {
+      "description": "Directional robot button; runtime sends CMD:motor:<direction>:<speed>. Use for forward/backward/left/right/stop, never plain set_motor for steering.",
+      "arguments": {
+        "direction": "forward | backward | left | right | stop",
+        "speed": "integer 0..80; stop uses 0",
+        "speedFrom": "exact id of an included control widget with action set_motor; use instead of fixed speed for a shared slider"
+      }
+    },
+    "set_motor": {
+      "description": "Motor slider or button. Runtime builds CMD:motor:<speed>; stop is CMD:motor:0. Never invent action/stop text commands.",
+      "arguments": {
+        "speed": "fixed button: integer 0..80; 0 stops the motor",
+        "speedFrom": "exact id of an included control widget with action set_motor; uses its current speed on click",
+        "range": "slider: integer 0..80"
+      }
+    }
+  },
+  "browserSkills": {
+    "camera_stream": {
+      "widgetType": "camera_stream",
+      "description": "Camera widget with built-in streaming start button, stop button and video display. Use ONE widget {type:camera_stream,action:{skill:camera_stream,source:{type:esp32_stream,url:...}}}; do not create separate camera button widgets or device commands. Can also combine with requested motor controls.",
+      "arguments": {
+        "source": "{type:esp32_stream,url:http://CAMERA_IP/stream}; use configured camera URL, never invent an IP"
+      }
+    },
+    "camera_capture": {
+      "internal": true,
+      "description": "Capture labeled images locally from PC webcam or a direct ESP32 MJPEG source; no image upload"
+    },
+    "train_classifier": {
+      "internal": true,
+      "description": "Train a dense classification head on frozen MobileNet CNN embeddings in the browser"
+    },
+    "classify_image": {
+      "internal": true,
+      "description": "Predict a trained class from a webcam or ESP32 frame with a confidence threshold"
+    },
+    "evaluate_rules": {
+      "internal": true,
+      "description": "Match a predicted label or compare it against a random opponent using configured beats pairs; send exact text via existing send_text"
+    },
+    "image_classifier": {
+      "widgetType": "classifier",
+      "description": "Reusable classifier widget combining camera_capture, train_classifier, classify_image and evaluate_rules",
+      "arguments": {
+        "source": "{type:webcam} (default), or {type:esp32_stream,url:http://CAMERA_IP/stream}; browser decodes frames directly, CNN remains in browser",
+        "classes": "2–8 unique labels",
+        "confidence": "0.5–0.99, default 0.8",
+        "model": "mobilenet only; trained classifier weights can be included in exported HTML",
+        "rules": "optional label rules: send_text{text}, set_motor{speed}, drive_motor{direction,speed}, set_servo{target,angle}; use only profile skills and fixed values",
+        "game": "optional {beats:[[winner,loser]],winText,lossText,drawText}; one direction for every pair; choose rules OR game"
+      }
+    }
+  },
+  "profiles": {
+    "legacy": {
+      "label": "micro:bit",
+      "skills": [
+        "display_sensor",
+        "send_text",
+        "set_servo",
+        "set_motor",
+        "drive_motor"
+      ],
+      "description": "Existing templates; the MakeCode program must implement selected sensor keys and commands."
+    }
+  }
+}
