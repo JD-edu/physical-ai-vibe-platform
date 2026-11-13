@@ -3,6 +3,7 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonParseError>
+#include <QHostAddress>
 #include <QSet>
 #include <cstring>
 #ifdef Q_OS_UNIX
@@ -13,12 +14,14 @@
 #include <unistd.h>
 #endif
 
-CameraWifiSerial::CameraWifiSerial(QObject *parent) : QObject(parent) {
+CameraWifiSerial::CameraWifiSerial(QObject *parent, WifiDevice device) : QObject(parent), device_(device) {
     handshake_.setInterval(1000);
     connect(&handshake_, &QTimer::timeout, this, [this] {
-        if (++attempts_ > 8) {
+        if (++attempts_ > (device_ == WifiDevice::Camera ? 8 : 30)) {
             handshake_.stop();
-            emit errorOccurred(QStringLiteral("카메라 응답이 없습니다. 포트와 최신 카메라 펌웨어를 확인하세요."));
+            emit errorOccurred(device_ == WifiDevice::Camera
+                ? QStringLiteral("카메라 응답이 없습니다. 포트와 최신 카메라 펌웨어를 확인하세요.")
+                : QStringLiteral("제어용 ESP32 응답이 없습니다. 포트와 최신 펌웨어를 확인하세요."));
             return;
         }
         requestStatus();
@@ -75,7 +78,7 @@ bool CameraWifiSerial::openPort(const QString &path, QString *error) {
     return isOpen();
 #else
     Q_UNUSED(path)
-    *error = "USB camera provisioning currently supports the Linux bridge build";
+    *error = "USB provisioning currently supports the Linux bridge build";
     return false;
 #endif
 }
@@ -105,10 +108,12 @@ bool CameraWifiSerial::writeLine(const QByteArray &line) {
     return false;
 }
 
-void CameraWifiSerial::requestStatus() { writeLine("CAMERA_WIFI_STATUS\n"); }
+void CameraWifiSerial::requestStatus() {
+    writeLine(device_ == WifiDevice::Camera ? "CAMERA_WIFI_STATUS\n" : "ESP32_WIFI_STATUS\n");
+}
 
-bool CameraWifiSerial::sendSettings(const QString &ssid, const QString &password, QString *error) {
-    if (!isOpen() || !verified_) { *error = QStringLiteral("먼저 최신 펌웨어의 카메라에 USB 연결하세요."); return false; }
+bool CameraWifiSerial::sendSettings(const QString &ssid, const QString &password, QString *error, const QString &serverIp) {
+    if (!isOpen() || !verified_) { *error = QStringLiteral("먼저 해당 ESP32에 USB 연결하세요."); return false; }
     const auto name = ssid.toUtf8(), secret = password.toUtf8();
     if (name.isEmpty() || name.size() > 32 || (secret.size() != 0 && (secret.size() < 8 || secret.size() > 63)) ||
         ssid.contains('\n') || ssid.contains('\r') || ssid.contains(QChar(0)) ||
@@ -116,7 +121,16 @@ bool CameraWifiSerial::sendSettings(const QString &ssid, const QString &password
         *error = QStringLiteral("SSID는 UTF-8 1~32바이트, 비밀번호는 8~63바이트 또는 개방형 네트워크의 빈 값이어야 합니다.");
         return false;
     }
-    const QByteArray packet = "CAMERA_WIFI_SET " + name.toHex() + " " + (secret.isEmpty() ? QByteArray("-") : secret.toHex()) + '\n';
+    QByteArray packet = (device_ == WifiDevice::Camera ? QByteArray("CAMERA_WIFI_SET ") : QByteArray("ESP32_WIFI_SET "))
+        + name.toHex() + " " + (secret.isEmpty() ? QByteArray("-") : secret.toHex());
+    if (device_ == WifiDevice::Controller) {
+        QHostAddress address;
+        if (!address.setAddress(serverIp.trimmed()) || address.protocol() != QAbstractSocket::IPv4Protocol) {
+            *error = QStringLiteral("브릿지 서버의 IPv4 주소를 입력하세요."); return false;
+        }
+        packet += " " + address.toString().toUtf8();
+    }
+    packet += '\n';
     return writeLine(packet);
 }
 
@@ -127,20 +141,23 @@ void CameraWifiSerial::readAvailable() {
         const auto count = ::read(fd_, data, sizeof(data));
         if (count < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) break;
         if (count < 0 && errno == EINTR) continue;
-        if (count <= 0) { closePort(); emit errorOccurred(QStringLiteral("USB 카메라 연결이 끊겼습니다.")); return; }
+        if (count <= 0) { closePort(); emit errorOccurred(QStringLiteral("USB 연결이 끊겼습니다.")); return; }
         buffer_.append(data, int(count));
         int end;
         while ((end = buffer_.indexOf('\n')) >= 0) {
             const QByteArray line = buffer_.left(end).trimmed(); buffer_.remove(0, end + 1);
-            // Ignore boot/stream logs. Only the camera's typed status is trusted.
-            if (!line.startsWith("CAMERA_WIFI ")) continue;
+            // Ignore boot logs. Accept only typed status from the selected device.
+            const QByteArray prefix = device_ == WifiDevice::Camera ? "CAMERA_WIFI " : "ESP32_WIFI ";
+            if (!line.startsWith(prefix)) continue;
             QJsonParseError error;
-            const auto document = QJsonDocument::fromJson(line.mid(12), &error);
+            const auto document = QJsonDocument::fromJson(line.mid(prefix.size()), &error);
             if (error.error != QJsonParseError::NoError || !document.isObject()) continue;
             const auto status = document.object();
-            if (status.value("device") != "phyvibe-camera" || status.value("protocol").toInt() != 1 || !status.value("state").isString()) continue;
+            const QString expected = device_ == WifiDevice::Camera ? "phyvibe-camera" : "phyvibe-control";
+            if (status.value("device") != expected || status.value("protocol").toInt() != 1 || !status.value("state").isString()) continue;
             verified_ = true; handshake_.stop();
-            emit cameraStatus(status);
+            emit deviceStatus(status);
+            if (device_ == WifiDevice::Camera) emit cameraStatus(status);
         }
         if (buffer_.size() > 4096) buffer_.clear();
     }

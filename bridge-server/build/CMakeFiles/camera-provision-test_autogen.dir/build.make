@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/jdedu/physical-ai-vibe-platform/bridge-server
+CMAKE_SOURCE_DIR = /home/robo/physical-ai-vibe-platform/bridge-server
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+CMAKE_BINARY_DIR = /home/robo/physical-ai-vibe-platform/bridge-server/build
 
 # Utility rule file for camera-provision-test_autogen.
 
@@ -70,9 +70,9 @@ CMakeFiles/camera-provision-test_autogen: camera-provision-test_autogen/timestam
 
 camera-provision-test_autogen/timestamp: /usr/lib/qt5/bin/moc
 camera-provision-test_autogen/timestamp: CMakeFiles/camera-provision-test_autogen.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC for target camera-provision-test"
-	/usr/bin/cmake -E cmake_autogen /home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/camera-provision-test_autogen.dir/AutogenInfo.json Release
-	/usr/bin/cmake -E touch /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/timestamp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC for target camera-provision-test"
+	/usr/bin/cmake -E cmake_autogen /home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/camera-provision-test_autogen.dir/AutogenInfo.json Release
+	/usr/bin/cmake -E touch /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/timestamp
 
 camera-provision-test_autogen: CMakeFiles/camera-provision-test_autogen
 camera-provision-test_autogen: camera-provision-test_autogen/timestamp
@@ -88,6 +88,6 @@ CMakeFiles/camera-provision-test_autogen.dir/clean:
 .PHONY : CMakeFiles/camera-provision-test_autogen.dir/clean
 
 CMakeFiles/camera-provision-test_autogen.dir/depend:
-	cd /home/jdedu/physical-ai-vibe-platform/bridge-server/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/jdedu/physical-ai-vibe-platform/bridge-server /home/jdedu/physical-ai-vibe-platform/bridge-server /home/jdedu/physical-ai-vibe-platform/bridge-server/build /home/jdedu/physical-ai-vibe-platform/bridge-server/build /home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/camera-provision-test_autogen.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/robo/physical-ai-vibe-platform/bridge-server/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/physical-ai-vibe-platform/bridge-server /home/robo/physical-ai-vibe-platform/bridge-server /home/robo/physical-ai-vibe-platform/bridge-server/build /home/robo/physical-ai-vibe-platform/bridge-server/build /home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/camera-provision-test_autogen.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/camera-provision-test_autogen.dir/depend
 

@@ -1,7 +1,7 @@
 CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o: \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp \
  /usr/include/stdc-predef.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QJsonObject \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonobject.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonvalue.h \
@@ -297,6 +297,11 @@ CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o: \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QJsonDocument \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsondocument.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QJsonParseError \
+ /usr/include/x86_64-linux-gnu/qt5/QtNetwork/QHostAddress \
+ /usr/include/x86_64-linux-gnu/qt5/QtNetwork/qhostaddress.h \
+ /usr/include/x86_64-linux-gnu/qt5/QtNetwork/qtnetworkglobal.h \
+ /usr/include/x86_64-linux-gnu/qt5/QtNetwork/qtnetwork-config.h \
+ /usr/include/x86_64-linux-gnu/qt5/QtNetwork/qabstractsocket.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QSet \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qset.h \
  /usr/include/c++/13/cstring /usr/include/fcntl.h \

@@ -1,10 +1,10 @@
-Start testing: Oct 31 20:52 KST
+Start testing: Nov 12 18:42 KST
 ----------------------------------------------------------
-1/4 Testing: bridge_link_events
-1/4 Test: bridge_link_events
-Command: "/home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test"
-Directory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
-"bridge_link_events" start time: Oct 31 20:52 KST
+1/5 Testing: bridge_link_events
+1/5 Test: bridge_link_events
+Command: "/home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test"
+Directory: /home/robo/physical-ai-vibe-platform/bridge-server/build
+"bridge_link_events" start time: Nov 12 18:42 KST
 Output:
 ----------------------------------------------------------
 ********* Start testing of NetworkStateTest *********
@@ -18,21 +18,21 @@ PASS   : NetworkStateTest::healthyProbesAreNotTelemetryAndCommandsRemainRaw()
 PASS   : NetworkStateTest::legacyClientsOnlyReceiveBlankProbes()
 PASS   : NetworkStateTest::webIdleEmitsEventAndServerStopClearsState()
 PASS   : NetworkStateTest::cleanupTestCase()
-Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 1030ms
+Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 1048ms
 ********* Finished testing of NetworkStateTest *********
 <end of output>
-Test time =   1.05 sec
+Test time =   1.08 sec
 ----------------------------------------------------------
 Test Passed.
-"bridge_link_events" end time: Oct 31 20:52 KST
+"bridge_link_events" end time: Nov 12 18:42 KST
 "bridge_link_events" time elapsed: 00:00:01
 ----------------------------------------------------------
 
-2/4 Testing: camera_usb_provision
-2/4 Test: camera_usb_provision
-Command: "/home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test"
-Directory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
-"camera_usb_provision" start time: Oct 31 20:52 KST
+2/5 Testing: camera_usb_provision
+2/5 Test: camera_usb_provision
+Command: "/home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test"
+Directory: /home/robo/physical-ai-vibe-platform/bridge-server/build
+"camera_usb_provision" start time: Nov 12 18:42 KST
 Output:
 ----------------------------------------------------------
 ********* Start testing of CameraProvisionTest *********
@@ -43,55 +43,73 @@ PASS   : CameraProvisionTest::rejectsMalformedPackets()
 QWARN  : CameraProvisionTest::uiSendsAndUpdatesStoredSettings() This plugin does not support propagateSizeHints()
 PASS   : CameraProvisionTest::uiSendsAndUpdatesStoredSettings()
 PASS   : CameraProvisionTest::rejectsOtherDevices()
+PASS   : CameraProvisionTest::controlUiSetsWifiAndServerIp()
+PASS   : CameraProvisionTest::controlRejectsCameraFirmware()
 PASS   : CameraProvisionTest::cleanupTestCase()
-Totals: 6 passed, 0 failed, 0 skipped, 0 blacklisted, 317ms
+Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 544ms
 ********* Finished testing of CameraProvisionTest *********
 <end of output>
-Test time =   0.33 sec
+Test time =   0.58 sec
 ----------------------------------------------------------
 Test Passed.
-"camera_usb_provision" end time: Oct 31 20:52 KST
+"camera_usb_provision" end time: Nov 12 18:42 KST
 "camera_usb_provision" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-3/4 Testing: esp32_link_frames
-3/4 Test: esp32_link_frames
-Command: "/usr/bin/python3" "/home/jdedu/physical-ai-vibe-platform/bridge-server/../esp32/tests/test_link_frames.py"
-Directory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
-"esp32_link_frames" start time: Oct 31 20:52 KST
+3/5 Testing: esp32_link_frames
+3/5 Test: esp32_link_frames
+Command: "/usr/bin/python3" "/home/robo/physical-ai-vibe-platform/bridge-server/../esp32/tests/test_link_frames.py"
+Directory: /home/robo/physical-ai-vibe-platform/bridge-server/build
+"esp32_link_frames" start time: Nov 12 18:42 KST
 Output:
 ----------------------------------------------------------
-PASS: fragmented link ping -> ESP32 pong; no UART/OLED heartbeat leakage; raw command framing, spaces, overflow recovery.
+PASS: fragmented link ping -> ESP32 pong; direct device dispatch, framing and overflow recovery.
 <end of output>
-Test time =   0.26 sec
+Test time =   0.21 sec
 ----------------------------------------------------------
 Test Passed.
-"esp32_link_frames" end time: Oct 31 20:52 KST
+"esp32_link_frames" end time: Nov 12 18:42 KST
 "esp32_link_frames" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-4/4 Testing: bridge_ui_lifecycle
-4/4 Test: bridge_ui_lifecycle
-Command: "/home/jdedu/physical-ai-vibe-platform/bridge-server/build/phyvibe-bridge" "--smoke-test" "--port" "0" "--tcp-port" "0" "--host" "127.0.0.1"
-Directory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
-"bridge_ui_lifecycle" start time: Oct 31 20:52 KST
+4/5 Testing: esp32_wifi_provision
+4/5 Test: esp32_wifi_provision
+Command: "/usr/bin/python3" "/home/robo/physical-ai-vibe-platform/bridge-server/../esp32/tests/test_wifi_provision.py"
+Directory: /home/robo/physical-ai-vibe-platform/bridge-server/build
+"esp32_wifi_provision" start time: Nov 12 18:42 KST
+Output:
+----------------------------------------------------------
+PASS: ESP32 Wi-Fi USB packet, open networks, invalid credentials and server IP
+<end of output>
+Test time =   0.07 sec
+----------------------------------------------------------
+Test Passed.
+"esp32_wifi_provision" end time: Nov 12 18:42 KST
+"esp32_wifi_provision" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/5 Testing: bridge_ui_lifecycle
+5/5 Test: bridge_ui_lifecycle
+Command: "/home/robo/physical-ai-vibe-platform/bridge-server/build/phyvibe-bridge" "--smoke-test" "--port" "0" "--tcp-port" "0" "--host" "127.0.0.1"
+Directory: /home/robo/physical-ai-vibe-platform/bridge-server/build
+"bridge_ui_lifecycle" start time: Nov 12 18:42 KST
 Output:
 ----------------------------------------------------------
 NET server_started · HTTP/TCP 서버 시작
-SYS Listening: HTTP 33937, ESP32 TCP 43181
+SYS Listening: HTTP 33409, ESP32 TCP 45635
 NET server_stopped · HTTP/TCP 서버 중지
 SYS Server stopped; network connections closed
 NET server_started · HTTP/TCP 서버 시작
-SYS Listening: HTTP 45973, ESP32 TCP 38683
+SYS Listening: HTTP 45197, ESP32 TCP 42569
 NET server_stopped · HTTP/TCP 서버 중지
 SYS Server stopped; network connections closed
 UI tabs and start/stop/restart passed
 <end of output>
-Test time =   0.03 sec
+Test time =   0.05 sec
 ----------------------------------------------------------
 Test Passed.
-"bridge_ui_lifecycle" end time: Oct 31 20:52 KST
+"bridge_ui_lifecycle" end time: Nov 12 18:42 KST
 "bridge_ui_lifecycle" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Oct 31 20:52 KST
+End testing: Nov 12 18:42 KST

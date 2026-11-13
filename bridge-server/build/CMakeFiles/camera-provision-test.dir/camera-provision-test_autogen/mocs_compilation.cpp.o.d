@@ -1,7 +1,7 @@
 CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o: \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/mocs_compilation.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/mocs_compilation.cpp \
  /usr/include/stdc-predef.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/UVLADIE3JM/moc_camera_wifi_serial.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/UVLADIE3JM/moc_camera_wifi_serial.cpp \
  /usr/include/c++/13/memory /usr/include/c++/13/bits/memoryfwd.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
@@ -118,7 +118,7 @@ CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilat
  /usr/include/c++/13/backward/auto_ptr.h \
  /usr/include/c++/13/pstl/glue_memory_defs.h \
  /usr/include/c++/13/pstl/execution_defs.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/UVLADIE3JM/../../../src/camera_wifi_serial.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/UVLADIE3JM/../../../src/camera_wifi_serial.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QJsonObject \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonobject.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonvalue.h \
@@ -288,8 +288,8 @@ CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilat
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QTimer \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qtimer.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qbasictimer.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/UVLADIE3JM/moc_camera_wifi_widget.cpp \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/UVLADIE3JM/../../../src/camera_wifi_widget.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/UVLADIE3JM/moc_camera_wifi_widget.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/UVLADIE3JM/../../../src/camera_wifi_widget.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qwidget.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtwidgetsglobal.h \

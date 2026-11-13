@@ -31,9 +31,12 @@ const state = {
   widgets: [],
   cameraUrl: localStorage.getItem("phyvibe.cameraUrl") || "",
   target: "widget",
-  deviceProfile: localStorage.getItem("phyvibe.deviceProfile") || "legacy",
+  deviceProfile: localStorage.getItem("phyvibe.deviceProfile") || "esp32",
   bridge: null,
-  bridgeUrl: localStorage.getItem("phyvibe.bridgeUrl") || "http://localhost:5000",
+  connectionMode: localStorage.getItem("phyvibe.connectionMode") || "real",
+  realBridgeUrl: localStorage.getItem("phyvibe.bridgeUrl") || "http://localhost:5000",
+  simulatorUrl: localStorage.getItem("phyvibe.simulatorUrl") || "http://127.0.0.1:5002",
+  bridgeUrl: "",
   pollController: null,
   lastMessageId: 0,
   logs: [],
@@ -44,6 +47,19 @@ const state = {
   qwenModelId: null,
   apiKey: localStorage.getItem("phyvibe.apiKey") || "",
 };
+state.bridgeUrl = state.connectionMode === "simulator" ? state.simulatorUrl : state.realBridgeUrl;
+
+function showSimulator() {
+  const scene = $("#simulatorScene");
+  const active = state.connectionMode === "simulator";
+  scene.classList.toggle("hidden", !active);
+  $("#clientCountLabel").textContent = active ? "가상 로봇 연결 수" : "ESP32 연결 수";
+  if (active) {
+    const url = `${state.simulatorUrl.replace(/\/$/, "")}/scene`;
+    if (scene.src !== url) scene.src = url;
+  } else scene.removeAttribute("src");
+  $("#bridgeUrlInput").value = state.bridgeUrl;
+}
 
 // 설정 화면의 모델 선택 목록. 실제 웹앱 생성은 Qwen과 데모를 지원합니다.
 const modelOptions = {
@@ -195,7 +211,7 @@ function renderStudioCamera() {
 // 컴파일러가 만든 실행 구성을 검증하고 허용된 스킬의 명령을 만듭니다.
 function normalizeWidgets(
   items,
-  profile = SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.legacy,
+  profile = SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.esp32,
 ) {
   const allowedTypes = new Set([
     "metric",
@@ -392,7 +408,7 @@ function resolveButtonCommands(actions, widgets) {
 async function generateWithQwen(prompt) {
   if (!state.qwenModelId && !(await checkQwenConnection()))
     throw new Error("Qwen3 8B에 연결할 수 없습니다.");
-  const profile = SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.legacy;
+  const profile = SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.esp32;
   const context = appIntentContext(prompt, state.cameraUrl);
   const messages = [
     { role: "system", content: appIntentSystemPrompt(profile, context) },
@@ -519,7 +535,8 @@ function renderWidgets() {
   );
   const project = {
     title: $("#dashboardTitle").textContent,
-    network: { transport: "http", bridgeUrl: state.bridgeUrl, deviceProfile: state.deviceProfile },
+    network: { transport: "http", bridgeUrl: state.bridgeUrl, realBridgeUrl: state.realBridgeUrl,
+      simulatorUrl: state.simulatorUrl, mode: state.connectionMode, deviceProfile: state.deviceProfile },
     widgets: state.widgets,
   };
   $("#codeContent").textContent =
@@ -613,7 +630,10 @@ function widgetsFromPrompt(prompt) {
       },
     ],
     [/조도|빛|light/i, { kind: "sensor", key: "light", title: "주변 조도", unit: "%" }],
-    [/모터|팬|motor|터틀/i, { kind: "motor", speedControl: "slider", speed: 50 }],
+    [/모터|팬|motor|터틀|로봇|전진|후진|좌회전|우회전/i,
+      { kind: "motor", speedControl: "slider", speed: 50,
+        directions: /로봇|전진|후진|좌회전|우회전|방향/i.test(prompt)
+          ? ["forward", "backward", "left", "right", "stop"] : undefined }],
     [/서보|servo/i, { kind: "servo", target: "servo", control: "slider", value: 90 }],
     [
       /화분|토양|soil|급수/i,
@@ -632,7 +652,7 @@ function widgetsFromPrompt(prompt) {
   return compileAppIntent(
     { version: 1, title: "데모", features },
     appIntentContext(prompt, state.cameraUrl),
-    SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.legacy,
+    SKILL_CATALOG.profiles[state.deviceProfile] || SKILL_CATALOG.profiles.esp32,
   ).widgets;
 }
 
@@ -766,7 +786,14 @@ function toggleBridge(enabled) {
     if (!["http:", "https:"].includes(url.protocol) || url.username || url.password)
       throw new Error("HTTP 또는 HTTPS 서버 URL을 입력하세요");
     state.bridgeUrl = url.href.replace(/\/$/, "");
-    localStorage.setItem("phyvibe.bridgeUrl", state.bridgeUrl);
+    if (state.connectionMode === "simulator") {
+      state.simulatorUrl = state.bridgeUrl;
+      localStorage.setItem("phyvibe.simulatorUrl", state.bridgeUrl);
+    } else {
+      state.realBridgeUrl = state.bridgeUrl;
+      localStorage.setItem("phyvibe.bridgeUrl", state.bridgeUrl);
+    }
+    showSimulator();
   } catch (error) {
     $("#bridgeToggle").checked = false;
     setConnection("error", "URL 확인", error.message);
@@ -793,7 +820,7 @@ function toggleBridge(enabled) {
       setConnection(
         "online",
         "서버 연결 완료",
-        `${state.bridgeUrl} · 수신 ${status.message_sequence || 0}건 · ESP32 명령 연결 ${status.connected_clients}대`,
+        `${state.bridgeUrl} · 수신 ${status.message_sequence || 0}건 · ${state.connectionMode === "simulator" ? "가상 로봇" : "ESP32"} ${status.connected_clients}대`,
       );
       $("#gatewayValue").textContent = new URL(state.bridgeUrl).host;
       $("#clientCountValue").textContent = status.connected_clients;
@@ -860,7 +887,25 @@ function userAppRuntime(project) {
   const status = document.querySelector("#status");
   const monitor = document.querySelector("#monitor");
   const endpoint = document.querySelector("#endpoint");
-  endpoint.value = project.network.bridgeUrl;
+  const mode = document.querySelector("#connectionMode");
+  const scene = document.querySelector("#simulatorScene");
+  let realUrl = project.network.realBridgeUrl || project.network.bridgeUrl;
+  let simulatorUrl = project.network.simulatorUrl || "http://127.0.0.1:5002";
+  mode.value = project.network.mode || "real";
+  endpoint.value = mode.value === "simulator" ? simulatorUrl : realUrl;
+  function showScene() {
+    scene.hidden = mode.value !== "simulator";
+    if (!scene.hidden) scene.src = `${simulatorUrl.replace(/\/$/, "")}/scene`;
+    else scene.removeAttribute("src");
+  }
+  showScene();
+  mode.onchange = () => {
+    controller?.abort();
+    status.textContent = "연결 중지 · 새 실행 대상을 연결하세요";
+    endpoint.value = mode.value === "simulator" ? simulatorUrl : realUrl;
+    project.network.bridgeUrl = endpoint.value;
+    showScene();
+  };
   let controller,
     lastId = 0;
   function log(text) {
@@ -899,6 +944,9 @@ function userAppRuntime(project) {
       if (!["http:", "https:"].includes(url.protocol) || url.username || url.password)
         throw new Error("HTTP / HTTPS URL을 입력하세요");
       project.network.bridgeUrl = url.href.replace(/\/$/, "");
+      if (mode.value === "simulator") simulatorUrl = project.network.bridgeUrl;
+      else realUrl = project.network.bridgeUrl;
+      showScene();
     } catch (error) {
       status.textContent = error.message;
       return;
@@ -915,7 +963,7 @@ function userAppRuntime(project) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         if (current.signal.aborted) return;
-        status.textContent = `서버 연결 완료 · 수신 ${data.message_sequence || 0}건 · ESP32 명령 연결 ${data.connected_clients}대`;
+        status.textContent = `서버 연결 완료 · 수신 ${data.message_sequence || 0}건 · ${mode.value === "simulator" ? "가상 로봇" : "ESP32"} ${data.connected_clients}대`;
         if (data.message_sequence < lastId) lastId = 0;
         for (const item of [...(data.message_history || [])].reverse()) {
           if (item.id <= lastId) continue;
@@ -1020,7 +1068,8 @@ async function downloadProject() {
     harnessVersion: "4.0",
     name: $("#projectName").value,
     title: $("#dashboardTitle").textContent,
-    network: { transport: "http", bridgeUrl: state.bridgeUrl, deviceProfile: state.deviceProfile },
+    network: { transport: "http", bridgeUrl: state.bridgeUrl, realBridgeUrl: state.realBridgeUrl,
+      simulatorUrl: state.simulatorUrl, mode: state.connectionMode, deviceProfile: state.deviceProfile },
     widgets: state.widgets,
   };
   // 영상·분류만 있는 앱은 하드웨어 브릿지 연결 UI가 필요하지 않습니다.
@@ -1119,10 +1168,11 @@ async function downloadProject() {
 </head>
 <body>
   <h1>${escapeHtml(project.title)}</h1>
-  <p>${needsBridge ? "하드웨어 제어: 서버 → ESP32 Wi-Fi 브릿지 → micro:bit" : "카메라 직접 연결 · 이미지 분류는 브라우저에서 실행"}</p>
+  <p>${needsBridge ? "하드웨어 제어: 브릿지 서버 → ESP32 컨트롤러" : "카메라 직접 연결 · 이미지 분류는 브라우저에서 실행"}</p>
 
   <!-- Network connection controls -->
   <section ${needsBridge ? "" : "hidden"}>
+  <label>실행 대상 <select id="connectionMode"><option value="real">실제 장치</option><option value="simulator">2D 시뮬레이터</option></select></label>
   <input id="endpoint" aria-label="브릿지 서버 URL">
   <button id="connect">연결</button>
   <button id="disconnect">연결 중지</button>
@@ -1137,6 +1187,7 @@ async function downloadProject() {
 
   <!-- Widgets are rendered from dashboardProject below -->
   <main id="widgetGrid" class="widget-grid"></main>
+  <iframe id="simulatorScene" title="2D 가상 로봇" style="width:100%;max-width:640px;aspect-ratio:4/3;border:1px solid #b8cce6;border-radius:10px;margin-top:16px" hidden></iframe>
 
   <!-- Received network data and outgoing commands -->
   <section ${needsBridge ? "" : "hidden"}><h2>Wi-Fi 데이터 모니터</h2>
@@ -1243,7 +1294,7 @@ function bindEvents() {
     $("#exportBtn").disabled = true;
     state.widgets = [];
     renderWidgets();
-    toast("장치 프로필 변경 · 해당 MakeCode 프로그램을 업로드하고 웹앱을 다시 생성하세요");
+    toast("장치 프로필 변경 · 웹앱을 다시 생성하세요");
   });
   // 생성 요청과 라이브·코드·스키마 화면 전환
   $("#generateBtn").addEventListener("click", generate);
@@ -1302,6 +1353,16 @@ function bindEvents() {
   // 브릿지 연결, 수동 송신과 네트워크 로그
   $("#bridgeUrlInput").addEventListener("change", () => {
     if ($("#bridgeToggle").checked) toggleBridge(true);
+  });
+  $("#connectionMode").addEventListener("change", (event) => {
+    state.connectionMode = event.target.value;
+    localStorage.setItem("phyvibe.connectionMode", state.connectionMode);
+    state.bridgeUrl = state.connectionMode === "simulator" ? state.simulatorUrl : state.realBridgeUrl;
+    const reconnect = $("#bridgeToggle").checked;
+    if (reconnect) toggleBridge(false);
+    showSimulator();
+    renderWidgets();
+    if (reconnect) toggleBridge(true);
   });
   $("#bridgeToggle").addEventListener("change", (e) => toggleBridge(e.target.checked));
   $("#sendTxBtn").addEventListener("click", () => {
@@ -1398,7 +1459,7 @@ function bindEvents() {
 $("#deviceProfileSelect").innerHTML = Object.entries(SKILL_CATALOG.profiles)
   .map(([id, profile]) => `<option value="${id}">${escapeHtml(profile.label)}</option>`)
   .join("");
-if (!SKILL_CATALOG.profiles[state.deviceProfile]) state.deviceProfile = "legacy";
+if (!SKILL_CATALOG.profiles[state.deviceProfile]) state.deviceProfile = "esp32";
 $("#deviceProfileSelect").value = state.deviceProfile;
 if (typeof window !== "undefined")
   window.addEventListener(
@@ -1414,7 +1475,8 @@ bindEvents();
 $("#esp32CameraUrl").value = state.cameraUrl;
 renderStudioCamera();
 $("#exportBtn").disabled = true;
-$("#bridgeUrlInput").value = state.bridgeUrl;
+$("#connectionMode").value = state.connectionMode;
+showSimulator();
 $("#llmUrlInput").value = QWEN_BASE_URL;
 $("#startupLlmUrlInput").value = QWEN_BASE_URL;
 addLog("SYS", "Network monitor ready · received network packets only");

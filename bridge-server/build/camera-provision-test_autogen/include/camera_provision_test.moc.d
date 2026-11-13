@@ -1,8 +1,9 @@
-/home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/include/camera_provision_test.moc: /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp \
-  /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/moc_predefs.h \
-  /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
-  /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.h \
-  /home/jdedu/physical-ai-vibe-platform/camera/lilygo_camera_station/camera_wifi_protocol.h \
+/home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/include/camera_provision_test.moc: /home/robo/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp \
+  /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/moc_predefs.h \
+  /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
+  /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.h \
+  /home/robo/physical-ai-vibe-platform/camera/lilygo_camera_station/camera_wifi_protocol.h \
+  /home/robo/physical-ai-vibe-platform/esp32/esp32_firmware/esp32_wifi_protocol.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
   /usr/include/asm-generic/ioctl.h \

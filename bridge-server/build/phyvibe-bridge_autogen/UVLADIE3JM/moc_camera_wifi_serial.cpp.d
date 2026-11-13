@@ -1,5 +1,5 @@
-/home/jdedu/physical-ai-vibe-platform/bridge-server/build/phyvibe-bridge_autogen/UVLADIE3JM/moc_camera_wifi_serial.cpp: /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
-  /home/jdedu/physical-ai-vibe-platform/bridge-server/build/phyvibe-bridge_autogen/moc_predefs.h \
+/home/robo/physical-ai-vibe-platform/bridge-server/build/phyvibe-bridge_autogen/UVLADIE3JM/moc_camera_wifi_serial.cpp: /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
+  /home/robo/physical-ai-vibe-platform/bridge-server/build/phyvibe-bridge_autogen/moc_predefs.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
   /usr/include/assert.h \

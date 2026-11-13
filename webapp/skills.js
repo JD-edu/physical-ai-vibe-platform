@@ -20,12 +20,12 @@ const SKILL_CATALOG = Object.freeze({
     },
     // 사용자가 지정한 문자열은 대소문자와 공백을 포함해 그대로 전송합니다.
     send_text: {
-      description: "Send exact literal text to micro:bit",
+      description: "Send exact literal text to ESP32; custom firmware must handle it for a physical effect",
       arguments: { text: "1–256 single-line characters; preserve case/spaces" },
     },
     // 서보 각도는 0~180 범위로 제한합니다.
     set_servo: {
-      description: "Slider sends CMD:target:angle to micro:bit",
+      description: "Slider sends CMD:target:angle to the ESP32 controller",
       arguments: { target: "servo, valve, or mouth", range: "integer 0..180" },
     },
     // 방향 제어: forward/backward/left/right/stop과 속도를 함께 표현합니다.
@@ -106,18 +106,18 @@ const SKILL_CATALOG = Object.freeze({
   },
   // 프로필은 의도 컴파일러가 사용할 수 있는 장치 스킬을 제한합니다.
   profiles: {
-    legacy: {
-      label: "micro:bit",
+    esp32: {
+      label: "ESP32",
       skills: ["display_sensor", "send_text", "set_servo", "set_motor", "drive_motor"],
       description:
-        "Existing templates; the MakeCode program must implement selected sensor keys and commands.",
+        "ESP32 handles motor and servo commands directly; text commands and sensor keys need custom firmware handlers.",
     },
   },
 });
 
 // Studio와 독립 HTML 웹앱이 함께 사용하는 HTTP 명령 전송 함수입니다.
 // signal은 연결 중지 시 요청을 취소하고, timeout은 응답 대기를 제한합니다.
-// 성공은 ESP32 전송 큐잉을 뜻하며 micro:bit의 실제 동작 완료를 확인하지 않습니다.
+// 성공은 ESP32 전송 큐잉을 뜻하며 실제 동작 완료를 확인하지 않습니다.
 async function deliverCommand(network, command, report, signal) {
   const requestSignal = signal
     ? AbortSignal.any([signal, AbortSignal.timeout(5000)])

@@ -12,7 +12,7 @@
 
 .network-field{display:block;font-size:10px;color:#526777}.network-field input{width:100%;margin-top:6px;padding:9px;border:1px solid #c7d4df;border-radius:8px;background:#ffffff;color:var(--text)}.network-note{font-size:10px;line-height:1.6;color:#526777}
 
-.target-row select{min-width:0;max-width:100%;background:#ffffff;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:6px;font-size:10px}.target-row .text-btn{margin:0}.target-row #activeProviderLabel{flex-basis:100%;overflow-wrap:anywhere}.makecode-link{flex-basis:100%}
+.target-row select{min-width:0;max-width:100%;background:#ffffff;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:6px;font-size:10px}.target-row .text-btn{margin:0}.target-row #activeProviderLabel{flex-basis:100%;overflow-wrap:anywhere}
 
 /* Bright maker workbench: clear controls, paper canvas, quiet surfaces. */
 :root{--shadow:0 2px 8px #2437460a;--radius:10px}
@@ -72,3 +72,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #esp32CameraPreview .vision-source,#esp32CameraPreview .vision-url{display:none}
 
 #esp32CameraPreview .vision-widget canvas{aspect-ratio:4/3;object-fit:contain}#esp32CameraPreview .vision-widget h3{display:none}
+.simulator-scene{display:block;width:100%;height:auto;aspect-ratio:4/3;border:1px solid #b8cce6;border-radius:10px;margin-top:16px;background:#f8fcff}
+.simulator-scene.hidden{display:none}
+.bridge-card select{width:100%;padding:10px;border:1px solid #ddc5a5;border-radius:7px;background:white}
+.mode-switcher{display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:12px;font-weight:700;color:#36566c}
+.mode-switcher select{min-width:130px;padding:8px 9px;border:1px solid #9dc4cb;border-radius:8px;background:#eff9fa;color:#155b64;font-weight:700}
+.device-scroll .bridge-card{order:-1}
+@media(max-width:700px){.topbar{grid-template-columns:1fr auto}.project-title{display:none}.mode-switcher{font-size:0;gap:0}.mode-switcher select{min-width:112px;font-size:11px;padding:7px 5px}}

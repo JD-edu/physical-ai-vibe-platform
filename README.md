@@ -1,6 +1,10 @@
 # Physical AI Vibe Coding Platform
 
-자연어로 피지컬 AI 대시보드를 만들고 micro:bit와 ESP32를 제어하는 브라우저 기반 스튜디오입니다. AI 생성은 사용자 PC에서 실행하는 **Qwen3 8B + llama.cpp**를 기본으로 사용합니다.
+## 2D 시뮬레이터
+
+실제 장치 없이 생성한 로봇 조종 웹앱을 시험하려면 별도 터미널에서 `npm run simulator`를 실행하고 Studio의 **실행 대상 → 2D 시뮬레이터**를 선택하세요. 전진·후진·좌우회전·정지 버튼을 누르면 라이브 뷰의 로봇이 움직입니다. 내보낸 웹앱에서도 같은 실행 대상을 선택할 수 있습니다. [사용 방법과 지원 명령](simulator/README.md)을 참고하세요.
+
+자연어로 피지컬 AI 대시보드를 만들고 ESP32를 제어하는 브라우저 기반 스튜디오입니다. AI 생성은 사용자 PC에서 실행하는 **Qwen3 8B + llama.cpp**를 기본으로 사용합니다.
 
 
 ## 가장 빠른 실행 순서
@@ -18,10 +22,10 @@ PHYVIBE 웹 스튜디오     http://localhost:3000/webapp/
           ↓ HTTP (Wi-Fi / Ethernet)
 독립 C++ 네트워크 서버      http://서버_PC_IP:5000
           ↓ Wi-Fi / TCP 5001
-ESP32 Wi-Fi 브릿지 → micro:bit 컨트롤러 (MakeCode)
+ESP32 Wi-Fi 컨트롤러 → 모터·서보 출력
 ```
 
-> llama.cpp는 `8080`, 네트워크 브릿지는 HTTP `5000` 및 TCP `5001`을 사용합니다. micro:bit 프로그래밍은 MakeCode에서 별도로 진행합니다.
+> llama.cpp는 `8080`, 네트워크 브릿지는 HTTP `5000` 및 TCP `5001`을 사용합니다. ESP32 펌웨어가 장치 명령을 직접 처리합니다.
 
 ## 1. 준비물
 
@@ -335,15 +339,14 @@ llama-server -m "/home/user/My Models/Qwen3-8B-Q4_K_M.gguf" --port 8080
 
 ```text
 .
-├── physical/
-│   ├── microbit/             # MakeCode 확장
-│   ├── esp32/                # ESP32 펌웨어
-│   └── bridge-server/        # 독립 C++ 네트워크 서버와 시작/정지 UI
+├── esp32/                    # ESP32 직접 제어 펌웨어
+├── bridge-server/            # 독립 C++ 네트워크 서버와 시작/정지 UI
+├── simulator/                # 2D 가상 로봇 및 가상 브릿지
 ├── webapp/                   # PHYVIBE 웹 스튜디오
-└── tutorials/                # 단계별 실습 자료
+└── camera/                   # ESP32 카메라 펌웨어와 수신 도구
 ```
 
-세부 웹앱 기능은 `webapp/README.md`, 하드웨어 실행과 배선 방법은 각 `physical` 하위 폴더의 README를 참고하세요.
+세부 웹앱 기능은 `webapp/README.md`, 하드웨어 실행과 배선 방법은 `esp32/README.md`를 참고하세요.
 # physical-ai-vibe-platform
 
 ## Ubuntu desktop app

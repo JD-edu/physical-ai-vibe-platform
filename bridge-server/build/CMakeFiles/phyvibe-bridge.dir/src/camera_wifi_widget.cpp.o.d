@@ -1,7 +1,7 @@
 CMakeFiles/phyvibe-bridge.dir/src/camera_wifi_widget.cpp.o: \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp \
  /usr/include/stdc-predef.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qwidget.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtwidgetsglobal.h \
@@ -293,7 +293,7 @@ CMakeFiles/phyvibe-bridge.dir/src/camera_wifi_widget.cpp.o: \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qsizepolicy.h \
  /usr/include/x86_64-linux-gnu/qt5/QtGui/qcursor.h \
  /usr/include/x86_64-linux-gnu/qt5/QtGui/qkeysequence.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QJsonObject \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonobject.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonvalue.h \

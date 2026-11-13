@@ -1,5 +1,6 @@
 #include "camera_wifi_widget.h"
 #include "camera_wifi_protocol.h"
+#include "esp32_wifi_protocol.h"
 #include <QApplication>
 #include <QComboBox>
 #include <QJsonDocument>
@@ -19,8 +20,10 @@ public:
     QString path;
     QByteArray pending;
     camera_wifi::Credentials stored;
+    esp32_wifi::Settings controlStored;
     bool wrongDevice = false;
-    explicit FakeCamera() {
+    bool controller = false;
+    explicit FakeCamera(bool control = false) : controller(control) {
         char name[128];
         if (openpty(&master, &slave, name, nullptr, nullptr) != 0) qFatal("openpty failed");
         path = name; fcntl(master, F_SETFL, O_NONBLOCK);
@@ -32,8 +35,14 @@ public:
             int end;
             while ((end = pending.indexOf('\n')) >= 0) {
                 const QByteArray line = pending.left(end); pending.remove(0, end + 1);
-                if (line == "CAMERA_WIFI_STATUS") reply("connected", "192.168.1.10");
-                else {
+                if (line == (controller ? "ESP32_WIFI_STATUS" : "CAMERA_WIFI_STATUS")) reply("connected", "192.168.1.10");
+                else if (controller) {
+                    esp32_wifi::Settings parsed;
+                    if (!esp32_wifi::parseSettings(line.constData(), parsed)) { reply("invalid_settings"); continue; }
+                    controlStored = parsed; ++updates;
+                    reply("connecting");
+                    QTimer::singleShot(25, this, [this] { reply(std::strcmp(controlStored.ssid, "fail-network") == 0 ? "wifi_failed" : "connected", "192.168.1.20"); });
+                } else {
                     camera_wifi::Credentials parsed;
                     if (!camera_wifi::parseSettings(line.constData(), parsed)) { reply("invalid_settings"); continue; }
                     stored = parsed; ++updates;
@@ -43,12 +52,15 @@ public:
             }
         });
         strcpy(stored.ssid, "existing-network"); strcpy(stored.password, "existing-password");
+        strcpy(controlStored.ssid, "existing-network"); strcpy(controlStored.password, "existing-password");
+        strcpy(controlStored.serverIp, "192.168.1.2");
     }
     void reply(const QString &state, const QString &ip = "") {
-        const QJsonObject status{{"device", wrongDevice ? "other-device" : "phyvibe-camera"}, {"protocol", 1},
-            {"state", state}, {"ssid", QString::fromUtf8(stored.ssid)}, {"ip", ip},
-            {"url", state == "connected" ? "http://" + ip + "/stream" : ""}};
-        const auto packet = "boot log ignored\nCAMERA_WIFI " + QJsonDocument(status).toJson(QJsonDocument::Compact) + '\n';
+        const QJsonObject status{{"device", wrongDevice ? "other-device" : controller ? "phyvibe-control" : "phyvibe-camera"}, {"protocol", 1},
+            {"state", state}, {"ssid", controller ? QString::fromUtf8(controlStored.ssid) : QString::fromUtf8(stored.ssid)}, {"ip", ip},
+            {"server_ip", controller ? QString::fromUtf8(controlStored.serverIp) : QString()},
+            {"url", controller ? QString() : state == "connected" ? "http://" + ip + "/stream" : ""}};
+        const auto packet = "boot log ignored\n" + QByteArray(controller ? "ESP32_WIFI " : "CAMERA_WIFI ") + QJsonDocument(status).toJson(QJsonDocument::Compact) + '\n';
         if (write(master, packet.constData(), 15) != 15) qFatal("PTY prefix write failed");
         QTimer::singleShot(5, this, [this, packet] { if (master >= 0 && write(master, packet.constData() + 15, size_t(packet.size() - 15)) != packet.size() - 15) qFatal("PTY status write failed"); });
     }
@@ -143,6 +155,47 @@ private slots:
         QVERIFY(!serial.sendSettings("network", "password123", &error));
         QCOMPARE(device.updates, 0);
         serial.closePort();
+    }
+    void controlUiSetsWifiAndServerIp() {
+        FakeCamera device(true);
+        CameraWifiWidget widget(nullptr, WifiDevice::Controller);
+        auto *port = widget.findChild<QComboBox *>("controlSerialPort");
+        auto *open = widget.findChild<QPushButton *>("controlConnect");
+        auto *ssid = widget.findChild<QLineEdit *>("controlSsid");
+        auto *password = widget.findChild<QLineEdit *>("controlPassword");
+        auto *serverIp = widget.findChild<QLineEdit *>("controlServerIp");
+        auto *save = widget.findChild<QPushButton *>("controlSaveWifi");
+        auto *deviceIp = widget.findChild<QLineEdit *>("controlDeviceIp");
+        auto *status = widget.findChild<QLabel *>("controlWifiStatus");
+        QVERIFY(port && open && ssid && password && serverIp && save && deviceIp && status);
+        QCOMPARE(password->echoMode(), QLineEdit::Password);
+        port->setEditText(device.path); open->click();
+        QTRY_VERIFY(save->isEnabled());
+        QCOMPARE(serverIp->text(), QString("192.168.1.2"));
+        ssid->setText(QString::fromUtf8("제어 WiFi"));
+        password->setText("control-password");
+        serverIp->setText("192.168.1.50");
+        save->click();
+        QVERIFY(password->text().isEmpty());
+        QTRY_COMPARE(device.updates, 1);
+        QTRY_COMPARE(deviceIp->text(), QString("192.168.1.20"));
+        QCOMPARE(QByteArray(device.controlStored.ssid), QString::fromUtf8("제어 WiFi").toUtf8());
+        QCOMPARE(QByteArray(device.controlStored.password), QByteArray("control-password"));
+        QCOMPARE(QByteArray(device.controlStored.serverIp), QByteArray("192.168.1.50"));
+        QVERIFY(status->text().contains("연결 완료"));
+        serverIp->setText("not-an-ip"); password->setText("new-password"); save->click();
+        QCOMPARE(device.updates, 1); QVERIFY(status->text().contains("IPv4"));
+        open->click();
+    }
+    void controlRejectsCameraFirmware() {
+        FakeCamera camera;
+        CameraWifiSerial serial(nullptr, WifiDevice::Controller);
+        QString error;
+        QVERIFY(serial.openPort(camera.path, &error));
+        QTest::qWait(80);
+        QVERIFY(!serial.isDevice());
+        QVERIFY(!serial.sendSettings("network", "password123", &error, "192.168.1.2"));
+        QCOMPARE(camera.updates, 0);
     }
 };
 QTEST_MAIN(CameraProvisionTest)

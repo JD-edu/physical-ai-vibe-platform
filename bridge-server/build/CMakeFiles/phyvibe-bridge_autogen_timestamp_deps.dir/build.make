@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/jdedu/physical-ai-vibe-platform/bridge-server
+CMAKE_SOURCE_DIR = /home/robo/physical-ai-vibe-platform/bridge-server
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+CMAKE_BINARY_DIR = /home/robo/physical-ai-vibe-platform/bridge-server/build
 
 # Utility rule file for phyvibe-bridge_autogen_timestamp_deps.
 
@@ -67,8 +67,8 @@ include CMakeFiles/phyvibe-bridge_autogen_timestamp_deps.dir/compiler_depend.mak
 include CMakeFiles/phyvibe-bridge_autogen_timestamp_deps.dir/progress.make
 
 CMakeFiles/phyvibe-bridge_autogen_timestamp_deps: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.15.13
-CMakeFiles/phyvibe-bridge_autogen_timestamp_deps: /usr/lib/qt5/bin/moc
 CMakeFiles/phyvibe-bridge_autogen_timestamp_deps: /usr/lib/x86_64-linux-gnu/libQt5Network.so.5.15.13
+CMakeFiles/phyvibe-bridge_autogen_timestamp_deps: /usr/lib/qt5/bin/moc
 CMakeFiles/phyvibe-bridge_autogen_timestamp_deps: /usr/lib/x86_64-linux-gnu/libQt5Widgets.so.5.15.13
 
 phyvibe-bridge_autogen_timestamp_deps: CMakeFiles/phyvibe-bridge_autogen_timestamp_deps
@@ -84,6 +84,6 @@ CMakeFiles/phyvibe-bridge_autogen_timestamp_deps.dir/clean:
 .PHONY : CMakeFiles/phyvibe-bridge_autogen_timestamp_deps.dir/clean
 
 CMakeFiles/phyvibe-bridge_autogen_timestamp_deps.dir/depend:
-	cd /home/jdedu/physical-ai-vibe-platform/bridge-server/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/jdedu/physical-ai-vibe-platform/bridge-server /home/jdedu/physical-ai-vibe-platform/bridge-server /home/jdedu/physical-ai-vibe-platform/bridge-server/build /home/jdedu/physical-ai-vibe-platform/bridge-server/build /home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/phyvibe-bridge_autogen_timestamp_deps.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/robo/physical-ai-vibe-platform/bridge-server/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/physical-ai-vibe-platform/bridge-server /home/robo/physical-ai-vibe-platform/bridge-server /home/robo/physical-ai-vibe-platform/bridge-server/build /home/robo/physical-ai-vibe-platform/bridge-server/build /home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/phyvibe-bridge_autogen_timestamp_deps.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/phyvibe-bridge_autogen_timestamp_deps.dir/depend
 

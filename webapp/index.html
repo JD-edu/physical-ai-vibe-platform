@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#087f8c">
   <title>PHYVIBE Studio</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=esp32-1">
   <link rel="stylesheet" href="qwen.css">
 </head>
 <body>
@@ -19,6 +19,7 @@
         <input id="projectName" value="새 프로젝트" aria-label="프로젝트 이름">
       </div>
       <nav class="top-actions" aria-label="프로젝트 작업">
+        <label class="mode-switcher">실행 대상<select id="connectionMode" aria-label="실행 대상"><option value="real">실제 장치</option><option value="simulator">2D 시뮬레이터</option></select></label>
         <button class="btn primary" id="exportBtn">↓ 웹앱 내보내기</button>
         <button class="icon-btn" id="settingsBtn" aria-label="AI 설정">⚙</button>
       </nav>
@@ -51,9 +52,6 @@
         <div class="composer-wrap">
           <div class="target-row">
             <span>생성 대상</span><select id="deviceProfileSelect" aria-label="장치 프로필"></select><small id="activeProviderLabel" aria-live="polite"></small><button class="text-btn" id="returnToQwenBtn">Local LLM 연결 ↻</button>
-            <div class="makecode-link">
-              <a class="text-btn" href="https://makecode.microbit.org/" target="_blank" rel="noopener">micro:bit MakeCode ↗</a>
-            </div>
           </div>
           <div class="composer">
             <textarea id="promptInput" aria-label="만들고 싶은 기능" rows="4" placeholder="자연어로 만들고 싶은 기능을 설명하세요..."></textarea>
@@ -85,10 +83,11 @@
         <div class="workspace">
           <div class="preview-frame" id="previewFrame">
             <div class="dashboard-head hidden">
-              <div><span class="live-pill"><i></i> LIVE</span><h2 id="dashboardTitle"></h2><p>Wi-Fi / Ethernet · ESP32 브릿지 · micro:bit 컨트롤러</p></div>
+              <div><span class="live-pill"><i></i> LIVE</span><h2 id="dashboardTitle"></h2><p>Wi-Fi / Ethernet · 브릿지 서버 · ESP32 컨트롤러</p></div>
               <div class="updated">마지막 업데이트 <strong id="lastUpdated">방금 전</strong></div>
             </div>
             <div class="widget-grid" id="widgetGrid"></div>
+            <iframe id="simulatorScene" class="simulator-scene hidden" title="2D 가상 로봇"></iframe>
           </div>
 
           <div class="code-view hidden" id="codeView">
@@ -119,10 +118,10 @@
             </div>
             <div class="telemetry">
               <div><span>게이트웨이</span><strong id="gatewayValue">—</strong></div>
-              <div><span>ESP32 연결 수</span><strong id="clientCountValue">—</strong></div>
+              <div><span id="clientCountLabel">ESP32 연결 수</span><strong id="clientCountValue">—</strong></div>
               <div><span>HTTP 응답 시간</span><strong id="rttValue">—</strong></div>
             </div>
-            <label class="network-field">브릿지 서버 URL<input id="bridgeUrlInput" type="url" placeholder="http://192.168.0.100:5000"></label><p class="network-note">PC는 Wi-Fi 또는 Ethernet으로 서버에 연결합니다. ESP32는 Wi-Fi 브릿지, micro:bit는 MakeCode로 프로그래밍하는 컨트롤러입니다.</p>
+            <label class="network-field">브릿지 서버 URL<input id="bridgeUrlInput" type="url" placeholder="http://192.168.0.100:5000"></label><p class="network-note">실제 장치는 브릿지 서버에, 시뮬레이터는 로컬 시뮬레이터 서버에 연결합니다.</p>
           </section>
 
 
@@ -167,10 +166,10 @@
     </div>
   </dialog>
 
-  <script src="skills.js?v=intent-1"></script>
+  <script src="skills.js?v=esp32-1"></script>
   <script src="camera.js?v=stable-stream-2"></script>
-  <script src="vision.js?v=stable-stream-2"></script>
-  <script src="intent.js?v=intent-1"></script>
-  <script src="app.js?v=intent-1"></script>
+  <script src="vision.js?v=esp32-1"></script>
+  <script src="intent.js?v=esp32-1"></script>
+  <script src="app.js?v=esp32-1"></script>
 </body>
 </html>

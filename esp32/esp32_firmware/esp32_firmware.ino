@@ -6,6 +6,7 @@
 #include <Adafruit_SSD1306.h>
 #include <esp_arduino_version.h>
 #include <esp_system.h>
+#include "esp32_wifi_protocol.h"
 
 // ==================== OLED ====================
 const int OLED_SDA_PIN = 21;
@@ -23,11 +24,6 @@ const char* DEFAULT_SERVER_IP = "192.168.0.81";
 const int HTTP_PORT = 5000;
 const char* RECEIVE_PATH = "/receive";
 const int COMMAND_PORT = 5001;
-
-// ==================== micro:bit UART ====================
-const int RX2_PIN = 16;
-const int TX2_PIN = 17;
-const int MICROBIT_BAUD = 115200;
 
 // ==================== TB6612FNG 모터 ====================
 // 회로도 기준
@@ -51,24 +47,36 @@ const int MOTOR_PWM_RESOLUTION = 8; // 0~255
 const int MOTOR1_PWM_CHANNEL = 0;
 const int MOTOR2_PWM_CHANNEL = 1;
 
+// ==================== 서보 출력 ====================
+// 사용하는 액추에이터에 맞춰 핀을 변경하세요. 전원은 ESP32와 별도로 공급하고 GND를 공유합니다.
+const int SERVO_PIN = 25;
+const int VALVE_PIN = 26;
+const int MOUTH_PIN = 27;
+const int SERVO_PWM_FREQ = 50;
+const int SERVO_PWM_RESOLUTION = 16;
+const int SERVO_CHANNELS[] = {2, 3, 4};
+const int SERVO_PINS[] = {SERVO_PIN, VALVE_PIN, MOUTH_PIN};
+
 
 // ==================== 객체/설정 ====================
 Preferences preferences;
 WiFiClient commandClient;
 String commandReceiveBuffer;
 bool discardCommandLine = false;
+String usbLine;
+bool discardUsbLine = false;
 
-String wifiSSID = "SK_WiFiGIGA73BA";
-String wifiPassword = "1609043407";
+String wifiSSID = "";
+String wifiPassword = "";
 String serverIP = DEFAULT_SERVER_IP;
 
 // Remember the credentials applied to the active station connection.
 String activeWiFiSSID = "";
 String activeWiFiPassword = "";
 
-// CONNECT 명령 전에는 절대로 네트워크 연결을 시도하지 않음
-bool microbitStarted = false;
 bool connectionEnabled = false;
+bool savedSettings = false;
+String provisionState = "needs_setup";
 
 unsigned long lastWiFiReconnect = 0;
 unsigned long lastServerReconnect = 0;
@@ -133,12 +141,40 @@ void initializeOLED() {
     }
 
     oledAvailable = true;
-    showOLEDMessage("ESP32 WiFi Bridge", "BOOTING", "Network disabled", "Wait micro:bit");
+    showOLEDMessage("ESP32 Controller", "BOOTING", "Loading settings");
+}
+
+String jsonString(const String& text) {
+    String output = "\"";
+    for (size_t i = 0; i < text.length(); ++i) {
+        const unsigned char c = text[i];
+        if (c == '"' || c == '\\') { output += '\\'; output += char(c); }
+        else if (c < 32) {
+            char escaped[7]; snprintf(escaped, sizeof(escaped), "\\u%04x", unsigned(c)); output += escaped;
+        } else output += char(c);
+    }
+    return output + "\"";
+}
+
+void reportProvisionStatus(const char *state = nullptr) {
+    const String current = state ? String(state) : provisionState;
+    const String ip = WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "";
+    Serial.println("ESP32_WIFI {\"device\":\"phyvibe-control\",\"protocol\":1,\"state\":" + jsonString(current) +
+                   ",\"ssid\":" + jsonString(wifiSSID) + ",\"server_ip\":" + jsonString(serverIP) +
+                   ",\"stored\":" + (savedSettings ? "true" : "false") + ",\"ip\":" + jsonString(ip) + "}");
 }
 
 void sendStatus(const String& status) {
-    Serial2.println("STATUS:" + status);
     Serial.println("STATUS:" + status);
+    if (status == "WIFI_CONNECTING" || status == "WIFI_RECONNECTING" || status == "SERVER_CONNECTING" ||
+        status == "WIFI_CONNECTED") provisionState = "connecting";
+    else if (status == "WIFI_FAILED") provisionState = "wifi_failed";
+    else if (status == "SERVER_FAILED") provisionState = "server_failed";
+    else if (status == "SERVER_CONNECTED") provisionState = "connected";
+    else if (status == "DISCONNECTED") provisionState = "disconnected";
+    else if (status == "SETTINGS_CLEARED") provisionState = "needs_setup";
+    else return;
+    reportProvisionStatus();
 }
 
 // ==================== 설정 저장/읽기 ====================
@@ -148,6 +184,20 @@ bool isValidServerIP(const String& ipText) {
 }
 
 void loadSettingsOnly() {
+    esp32_wifi::Settings stored;
+    if (preferences.begin("phyctl", true)) {
+        const bool found = preferences.getBytesLength("settings") == sizeof(stored) &&
+                           preferences.getBytes("settings", &stored, sizeof(stored)) == sizeof(stored) &&
+                           esp32_wifi::validSettings(stored);
+        preferences.end();
+        if (found) {
+            wifiSSID = stored.ssid; wifiPassword = stored.password; serverIP = stored.serverIp;
+            savedSettings = true; provisionState = "connecting";
+            Serial.println("Settings loaded");
+            return;
+        }
+    }
+    // Migrate credentials saved by the previous USB Serial Monitor workflow.
     preferences.begin("wifi", true);
     wifiSSID = preferences.getString("ssid", "");
     wifiPassword = preferences.getString("password", "");
@@ -159,19 +209,23 @@ void loadSettingsOnly() {
 
     if (!isValidServerIP(serverIP)) serverIP = DEFAULT_SERVER_IP;
 
-    // 중요: 설정은 읽지만 Wi-Fi.begin()은 호출하지 않음
-    Serial.println("Settings loaded, network remains disabled");
+    savedSettings = wifiSSID.length() > 0;
+    provisionState = savedSettings ? "connecting" : "needs_setup";
+
+    Serial.println("Settings loaded");
 }
 
-void saveSettings() {
-    preferences.begin("wifi", false);
-    preferences.putString("ssid", wifiSSID);
-    preferences.putString("password", wifiPassword);
+bool saveSettings() {
+    esp32_wifi::Settings settings;
+    if (wifiSSID.length() > 32 || wifiPassword.length() > 63 || serverIP.length() > 15) return false;
+    wifiSSID.toCharArray(settings.ssid, sizeof(settings.ssid));
+    wifiPassword.toCharArray(settings.password, sizeof(settings.password));
+    serverIP.toCharArray(settings.serverIp, sizeof(settings.serverIp));
+    if (!esp32_wifi::validSettings(settings) || !preferences.begin("phyctl", false)) return false;
+    const bool stored = preferences.putBytes("settings", &settings, sizeof(settings)) == sizeof(settings);
     preferences.end();
-
-    preferences.begin("server", false);
-    preferences.putString("ip", serverIP);
-    preferences.end();
+    if (stored) savedSettings = true;
+    return stored;
 }
 
 // ==================== 연결 처리 ====================
@@ -248,7 +302,7 @@ bool connectCommandServer() {
 
     // Start a fresh traffic view for this connection; do not show stale RX data.
     oledRxLine = "RX: (none)";
-    // Negotiate bridge link monitoring. This is not a micro:bit command ACK.
+    // Negotiate bridge link monitoring. This is not a motor execution ACK.
     commandClient.println("PHYVIBE_LINK_HELLO:" + WiFi.macAddress());
     const size_t greetingBytes = commandClient.println("ESP32_CONNECTED");
     recordBridgeTx("ESP32_CONNECTED", greetingBytes == 17 ? "TCP" : "ERR");
@@ -395,166 +449,158 @@ void stopAllMotors() {
     digitalWrite(MOTOR_STBY_PIN, LOW);
 }
 
-// 형식:
-// MOTOR:1:<speed>       예) MOTOR:1:80
-// MOTOR:2:<speed>       예) MOTOR:2:-50
-// MOTOR:BOTH:<m1>,<m2>  예) MOTOR:BOTH:80,80
-// MOTOR:STOP
-bool processMotorCommand(const String& command) {
-    if (command == "MOTOR:STOP") {
-        stopAllMotors();
-        sendStatus("MOTOR_STOPPED");
+// ==================== ESP32 직접 명령 ====================
+void initializeServos() {
+    for (int i = 0; i < 3; i++) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+        ledcAttachChannel(SERVO_PINS[i], SERVO_PWM_FREQ, SERVO_PWM_RESOLUTION, SERVO_CHANNELS[i]);
+#else
+        ledcSetup(SERVO_CHANNELS[i], SERVO_PWM_FREQ, SERVO_PWM_RESOLUTION);
+        ledcAttachPin(SERVO_PINS[i], SERVO_CHANNELS[i]);
+#endif
+    }
+}
+
+void setServoAngle(int index, int angle) {
+    // 50 Hz period = 20,000 us; 500..2,500 us maps to 0..180 degrees.
+    const uint32_t pulseUs = 500 + (uint32_t(angle) * 2000) / 180;
+    const uint32_t duty = pulseUs * 65535UL / 20000UL;
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    ledcWriteChannel(SERVO_CHANNELS[index], duty);
+#else
+    ledcWrite(SERVO_CHANNELS[index], duty);
+#endif
+}
+
+bool parseNumber(const String& text, int minValue, int maxValue, int& result) {
+    if (text.length() == 0) return false;
+    size_t start = text[0] == '-' ? 1 : 0;
+    if (start == text.length()) return false;
+    for (size_t i = start; i < text.length(); i++) if (!isDigit(text[i])) return false;
+    const long value = text.toInt();
+    if (value < minValue || value > maxValue) return false;
+    result = int(value);
+    return true;
+}
+
+bool processDeviceCommand(const String& command) {
+    if (command.startsWith("CMD:motor:")) {
+        String rest = command.substring(10);
+        const int separator = rest.indexOf(':');
+        String direction = separator >= 0 ? rest.substring(0, separator) : "forward";
+        String speedText = separator >= 0 ? rest.substring(separator + 1) : rest;
+        int speed;
+        if (!parseNumber(speedText, 0, 80, speed)) return false;
+        if (direction != "forward" && direction != "backward" && direction != "left" &&
+            direction != "right" && direction != "stop") return false;
+        if (direction == "stop" || speed == 0) stopAllMotors();
+        else if (direction == "forward") { setMotorSpeed(1, speed); setMotorSpeed(2, speed); }
+        else if (direction == "backward") { setMotorSpeed(1, -speed); setMotorSpeed(2, -speed); }
+        else if (direction == "left") { setMotorSpeed(1, -speed); setMotorSpeed(2, speed); }
+        else if (direction == "right") { setMotorSpeed(1, speed); setMotorSpeed(2, -speed); }
+        else return false;
+        sendStatus("MOTOR_COMMAND_APPLIED");
         return true;
     }
-
-    if (command.startsWith("MOTOR:1:")) {
-        int speed = command.substring(8).toInt();
-        speed = constrain(speed, -100, 100);
-        setMotorSpeed(1, speed);
-        sendStatus("MOTOR1:" + String(speed));
+    if (command.startsWith("MOT:")) {
+        const String values = command.substring(4);
+        const int separator = values.indexOf(':');
+        if (separator < 0) return false;
+        int left, right;
+        if (!parseNumber(values.substring(0, separator), -255, 255, left) ||
+            !parseNumber(values.substring(separator + 1), -255, 255, right)) return false;
+        if (left == 0 && right == 0) stopAllMotors();
+        else { setMotorSpeed(1, map(left, -255, 255, -100, 100));
+               setMotorSpeed(2, map(right, -255, 255, -100, 100)); }
+        sendStatus("MOTOR_COMMAND_APPLIED");
         return true;
     }
-
-    if (command.startsWith("MOTOR:2:")) {
-        int speed = command.substring(8).toInt();
-        speed = constrain(speed, -100, 100);
-        setMotorSpeed(2, speed);
-        sendStatus("MOTOR2:" + String(speed));
+    if (command.startsWith("CMD:servo:") || command.startsWith("CMD:valve:") ||
+        command.startsWith("CMD:mouth:")) {
+        const int separator = command.lastIndexOf(':');
+        int angle;
+        if (!parseNumber(command.substring(separator + 1), 0, 180, angle)) return false;
+        const int index = command.startsWith("CMD:servo:") ? 0 :
+                          command.startsWith("CMD:valve:") ? 1 : 2;
+        setServoAngle(index, angle);
+        sendStatus("SERVO_COMMAND_APPLIED");
         return true;
     }
-
-    if (command.startsWith("MOTOR:BOTH:")) {
-        String values = command.substring(11);
-        int commaIndex = values.indexOf(',');
-
-        if (commaIndex < 0) {
-            sendStatus("MOTOR_COMMAND_ERROR");
-            return true;
-        }
-
-        int speed1 = values.substring(0, commaIndex).toInt();
-        int speed2 = values.substring(commaIndex + 1).toInt();
-
-        speed1 = constrain(speed1, -100, 100);
-        speed2 = constrain(speed2, -100, 100);
-
-        setMotorSpeed(1, speed1);
-        setMotorSpeed(2, speed2);
-
-        sendStatus("MOTORS:" + String(speed1) + "," + String(speed2));
-        return true;
-    }
-
     return false;
 }
 
-// ==================== micro:bit 명령 ====================
-void processMicrobitCommand(String command) {
-    command.trim();
-    if (command.length() == 0) return;
-
-    if (command.startsWith("PASSWORD:")) Serial.println("micro:bit -> PASSWORD:[redacted]");
-    else Serial.println("micro:bit -> " + command);
-
-    // 모터 명령은 Wi-Fi 연결 여부와 관계없이 즉시 처리
-    if (processMotorCommand(command)) {
-        return;
-    }
-
-    if (command == "MB_START") {
-        microbitStarted = true;
-        showOLEDMessage("micro:bit READY", "UART: " + String(MICROBIT_BAUD), "Network disabled", "Send WiFi settings");
-        sendStatus("ESP32_READY");
-        return;
-    }
-
-    if (command.startsWith("SSID:")) {
-        wifiSSID = command.substring(5);
-        wifiSSID.trim();
-        showOLEDMessage("SSID RECEIVED", wifiSSID, "Network disabled", "Wait PASSWORD");
-        sendStatus("SSID_RECEIVED");
-        return;
-    }
-
-    if (command.startsWith("PASSWORD:")) {
-        wifiPassword = command.substring(9);
-        showOLEDMessage("PASSWORD RECEIVED", "Network disabled", "Wait SERVER_IP", "or CONNECT");
-        sendStatus("PASSWORD_RECEIVED");
-        return;
-    }
-
-    if (command.startsWith("SERVER_IP:")) {
-        String newIP = command.substring(10);
-        newIP.trim();
-
-        if (!isValidServerIP(newIP)) {
-            showOLEDMessage("SERVER IP ERROR", newIP, "Invalid address");
-            sendStatus("INVALID_SERVER_IP");
-            return;
+// USB 시리얼 모니터에서 115200 baud, 줄바꿈으로 초기 네트워크 설정.
+void processUsbCommand(String command) {
+    if (command.endsWith("\r")) command.remove(command.length() - 1);
+    if (command == "ESP32_WIFI_STATUS") { reportProvisionStatus(); return; }
+    if (command.startsWith("ESP32_WIFI_SET ")) {
+        esp32_wifi::Settings next;
+        if (!esp32_wifi::parseSettings(command.c_str(), next)) { reportProvisionStatus("invalid_settings"); return; }
+        const String oldSsid = wifiSSID, oldPassword = wifiPassword, oldServerIp = serverIP;
+        wifiSSID = next.ssid; wifiPassword = next.password; serverIP = next.serverIp;
+        if (!saveSettings()) {
+            wifiSSID = oldSsid; wifiPassword = oldPassword; serverIP = oldServerIp;
+            reportProvisionStatus("storage_error"); return;
         }
-
-        if (serverIP != newIP) commandClient.stop();
-        serverIP = newIP;
-        showOLEDMessage("SERVER IP RECEIVED", serverIP, "Network disabled", "Send CONNECT");
-        sendStatus("SERVER_IP_RECEIVED");
-        return;
-    }
-
-    if (command == "CONNECT") {
-        microbitStarted = true;
+        stopAllMotors();
+        commandClient.stop();
         connectionEnabled = true;
-        saveSettings();
-
-        showOLEDMessage("CONNECT COMMAND", "Settings saved", "Starting WiFi...", serverIP);
-        sendStatus("CONNECT_ACCEPTED");
-
+        provisionState = "connecting";
+        reportProvisionStatus();
         if (connectWiFi()) connectCommandServer();
         return;
     }
-
-    if (command == "DISCONNECT") {
-        stopAllMotors();
-        connectionEnabled = false;
-        commandClient.stop();
-        WiFi.disconnect(true);
-        WiFi.mode(WIFI_OFF);
-        showOLEDMessage("NETWORK STOPPED", "By micro:bit", "Wait CONNECT");
-        sendStatus("DISCONNECTED");
+    if (command.startsWith("PASSWORD:")) { wifiPassword = command.substring(9); sendStatus("PASSWORD_RECEIVED"); return; }
+    command.trim();
+    if (command.length() == 0) return;
+    Serial.println("USB -> " + command);
+    if (command.startsWith("SSID:")) { wifiSSID = command.substring(5); wifiSSID.trim(); sendStatus("SSID_RECEIVED"); return; }
+    if (command.startsWith("SERVER_IP:")) {
+        String next = command.substring(10); next.trim();
+        if (!isValidServerIP(next)) { sendStatus("INVALID_SERVER_IP"); return; }
+        if (serverIP != next) commandClient.stop();
+        serverIP = next; sendStatus("SERVER_IP_RECEIVED"); return;
+    }
+    if (command == "CONNECT") {
+        if (wifiSSID.length() == 0) { sendStatus("WIFI_NO_SSID"); return; }
+        if (!saveSettings()) { reportProvisionStatus("storage_error"); return; }
+        connectionEnabled = true;
+        if (connectWiFi()) connectCommandServer();
         return;
     }
-
-    if (command == "CLEAR") {
-        stopAllMotors();
-        connectionEnabled = false;
-        commandClient.stop();
-        WiFi.disconnect(true);
-        WiFi.mode(WIFI_OFF);
-
-        preferences.begin("wifi", false); preferences.clear(); preferences.end();
-        preferences.begin("server", false); preferences.clear(); preferences.end();
-
-        wifiSSID = "";
-        wifiPassword = "";
-        serverIP = DEFAULT_SERVER_IP;
-
-        showOLEDMessage("SETTINGS CLEARED", "Network disabled", "Wait new settings");
-        sendStatus("SETTINGS_CLEARED");
+    if (command == "DISCONNECT" || command == "CLEAR") {
+        stopAllMotors(); connectionEnabled = false; commandClient.stop();
+        WiFi.disconnect(true); WiFi.mode(WIFI_OFF);
+        if (command == "CLEAR") {
+            preferences.begin("phyctl", false); preferences.clear(); preferences.end();
+            preferences.begin("wifi", false); preferences.clear(); preferences.end();
+            preferences.begin("server", false); preferences.clear(); preferences.end();
+            wifiSSID = ""; wifiPassword = ""; serverIP = DEFAULT_SERVER_IP; savedSettings = false;
+        }
+        sendStatus(command == "CLEAR" ? "SETTINGS_CLEARED" : "DISCONNECTED");
         return;
     }
-
-    sendToServer(command);
+    if (!processDeviceCommand(command)) sendStatus("UNKNOWN_COMMAND");
 }
 
-void checkMicrobitSerial() {
-    while (Serial2.available() > 0) {
-        String command = Serial2.readStringUntil('\n');
-        processMicrobitCommand(command);
+void checkUsbSerial() {
+    while (Serial.available() > 0) {
+        const char c = char(Serial.read());
+        if (c == '\r') continue;
+        if (c == '\n') {
+            if (discardUsbLine) reportProvisionStatus("invalid_settings");
+            else if (usbLine.length()) processUsbCommand(usbLine);
+            usbLine = ""; discardUsbLine = false;
+        } else if (!discardUsbLine) {
+            if (usbLine.length() >= 512) { usbLine = ""; discardUsbLine = true; }
+            else usbLine += c;
+        }
     }
 }
 
 void handleServerLine(String command) {
     if (command.endsWith("\r")) command.remove(command.length() - 1);
-    // Link probes terminate here; no heartbeat is forwarded to the micro:bit.
+    // Link probes terminate here and never reach the motor or servo outputs.
     if (command.startsWith("PHYVIBE_LINK_PING:")) {
         const String token = command.substring(18);
         if (token.length() > 0 && token.length() <= 32) commandClient.println("PHYVIBE_LINK_PONG:" + token);
@@ -565,13 +611,13 @@ void handleServerLine(String command) {
         oledRxLine = shortenText("RX:" + command, 21);
         showBridgeTraffic();
         Serial.println("Bridge -> ESP32: " + command);
-        Serial2.println(command);
+        if (!processDeviceCommand(command)) Serial.println("Unsupported device command: " + command);
     }
 }
 
 void checkServerCommand() {
     if (!connectionEnabled || !commandClient.connected()) return;
-    // Preserve fragmented TCP lines across loop iterations instead of forwarding
+    // Preserve fragmented TCP lines across loop iterations instead of processing
     // an incomplete ping/command after a readStringUntil timeout.
     while (commandClient.available() > 0) {
         const char c = char(commandClient.read());
@@ -588,8 +634,16 @@ void checkServerCommand() {
 }
 
 void maintainConnections() {
-    // CONNECT가 한 번도 오지 않았다면 아무 연결 작업도 하지 않음
+    // USB에서 DISCONNECT를 받았다면 재연결하지 않음
     if (!connectionEnabled) return;
+
+    static bool linkWasOnline = false;
+    const bool linkOnline = WiFi.status() == WL_CONNECTED && commandClient.connected();
+    if (linkWasOnline && !linkOnline) {
+        stopAllMotors();
+        sendStatus("MOTOR_STOPPED_LINK_LOST");
+    }
+    linkWasOnline = linkOnline;
 
     if (WiFi.status() != WL_CONNECTED) {
         if (millis() - lastWiFiReconnect >= WIFI_RECONNECT_INTERVAL) {
@@ -625,22 +679,21 @@ void setup() {
 
     initializeOLED();
     initializeMotors();
+    initializeServos();
 
-    Serial2.begin(MICROBIT_BAUD, SERIAL_8N1, RX2_PIN, TX2_PIN);
-    Serial2.setTimeout(100);
+    Serial.setTimeout(100);
 
     loadSettingsOnly();
+    reportProvisionStatus();
 
-    // ESP32 부팅 직후 Wi-Fi를 명시적으로 끔
-    commandClient.stop();
-    WiFi.disconnect(true);
-    WiFi.mode(WIFI_OFF);
-
-    showOLEDMessage("ESP32 WAITING", "UART: " + String(MICROBIT_BAUD), "WiFi: OFF", "Wait micro:bit");
+    connectionEnabled = wifiSSID.length() > 0;
+    if (connectionEnabled) {
+        if (connectWiFi()) connectCommandServer();
+    } else showOLEDMessage("ESP32 WAITING", "USB settings needed", "SSID/PASSWORD/IP", "then CONNECT");
 }
 
 void loop() {
-    checkMicrobitSerial();
+    checkUsbSerial();
     checkServerCommand();
     maintainConnections();
     delay(5);

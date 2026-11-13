@@ -48,11 +48,13 @@ int main(int argc, char *argv[]) {
         if (parser.isSet("smoke-test")) {
             QTimer::singleShot(0, [&] {
                 auto *tabs = window->findChild<QTabWidget *>("bridgeTabs");
-                auto *camera = window->findChild<CameraWifiWidget *>();
-                bool success = tabs && tabs->count() == 2 && camera;
-                success = success && tabs->widget(1)->isAncestorOf(camera) && !tabs->widget(0)->isAncestorOf(camera);
+                const auto *camera = tabs && tabs->count() == 3 ? tabs->widget(1)->findChild<CameraWifiWidget *>() : nullptr;
+                const auto *control = tabs && tabs->count() == 3 ? tabs->widget(2)->findChild<CameraWifiWidget *>() : nullptr;
+                bool success = camera && control && camera != control;
                 success = success && window->startServer() && server.isRunning();
                 if (tabs) tabs->setCurrentIndex(1);
+                success = success && server.isRunning();
+                if (tabs) tabs->setCurrentIndex(2);
                 success = success && server.isRunning();
                 if (tabs) tabs->setCurrentIndex(0);
                 server.stop(); success = success && !server.isRunning();

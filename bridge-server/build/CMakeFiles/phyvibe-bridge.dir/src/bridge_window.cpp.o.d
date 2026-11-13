@@ -1,8 +1,8 @@
 CMakeFiles/phyvibe-bridge.dir/src/bridge_window.cpp.o: \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp \
  /usr/include/stdc-predef.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_window.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_server.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_window.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_server.h \
  /usr/include/x86_64-linux-gnu/qt5/QtNetwork/QHostAddress \
  /usr/include/x86_64-linux-gnu/qt5/QtNetwork/qhostaddress.h \
  /usr/include/x86_64-linux-gnu/qt5/QtNetwork/qtnetworkglobal.h \
@@ -334,8 +334,8 @@ CMakeFiles/phyvibe-bridge.dir/src/bridge_window.cpp.o: \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qsizepolicy.h \
  /usr/include/x86_64-linux-gnu/qt5/QtGui/qcursor.h \
  /usr/include/x86_64-linux-gnu/qt5/QtGui/qkeysequence.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QPair \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qpair.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QSocketNotifier \

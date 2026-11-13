@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/jdedu/physical-ai-vibe-platform/bridge-server
+CMAKE_SOURCE_DIR = /home/robo/physical-ai-vibe-platform/bridge-server
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+CMAKE_BINARY_DIR = /home/robo/physical-ai-vibe-platform/bridge-server/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/network-state-test.dir/depend.make
@@ -71,93 +71,93 @@ include CMakeFiles/network-state-test.dir/flags.make
 
 network-state-test_autogen/timestamp: /usr/lib/qt5/bin/moc
 network-state-test_autogen/timestamp: CMakeFiles/network-state-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC for target network-state-test"
-	/usr/bin/cmake -E cmake_autogen /home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/network-state-test_autogen.dir/AutogenInfo.json Release
-	/usr/bin/cmake -E touch /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/timestamp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC for target network-state-test"
+	/usr/bin/cmake -E cmake_autogen /home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/network-state-test_autogen.dir/AutogenInfo.json Release
+	/usr/bin/cmake -E touch /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/timestamp
 
 CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o: CMakeFiles/network-state-test.dir/flags.make
 CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o: network-state-test_autogen/mocs_compilation.cpp
 CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o: CMakeFiles/network-state-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o -MF CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/mocs_compilation.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o -MF CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/mocs_compilation.cpp
 
 CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/mocs_compilation.cpp > CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/mocs_compilation.cpp > CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.i
 
 CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/mocs_compilation.cpp -o CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/mocs_compilation.cpp -o CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.s
 
 CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o: CMakeFiles/network-state-test.dir/flags.make
-CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o: /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/network_state_test.cpp
+CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o: /home/robo/physical-ai-vibe-platform/bridge-server/tests/network_state_test.cpp
 CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o: CMakeFiles/network-state-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o -MF CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o.d -o CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/network_state_test.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o -MF CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o.d -o CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/tests/network_state_test.cpp
 
 CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/network_state_test.cpp > CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/tests/network_state_test.cpp > CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.i
 
 CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/network_state_test.cpp -o CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/tests/network_state_test.cpp -o CMakeFiles/network-state-test.dir/tests/network_state_test.cpp.s
 
 CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o: CMakeFiles/network-state-test.dir/flags.make
-CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o: /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_server.cpp
+CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o: /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_server.cpp
 CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o: CMakeFiles/network-state-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o -MF CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o.d -o CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_server.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o -MF CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o.d -o CMakeFiles/network-state-test.dir/src/bridge_server.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_server.cpp
 
 CMakeFiles/network-state-test.dir/src/bridge_server.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/network-state-test.dir/src/bridge_server.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_server.cpp > CMakeFiles/network-state-test.dir/src/bridge_server.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_server.cpp > CMakeFiles/network-state-test.dir/src/bridge_server.cpp.i
 
 CMakeFiles/network-state-test.dir/src/bridge_server.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/network-state-test.dir/src/bridge_server.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_server.cpp -o CMakeFiles/network-state-test.dir/src/bridge_server.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_server.cpp -o CMakeFiles/network-state-test.dir/src/bridge_server.cpp.s
 
 CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o: CMakeFiles/network-state-test.dir/flags.make
-CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o: /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp
+CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o: /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp
 CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o: CMakeFiles/network-state-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o -MF CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o.d -o CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o -MF CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o.d -o CMakeFiles/network-state-test.dir/src/bridge_window.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp
 
 CMakeFiles/network-state-test.dir/src/bridge_window.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/network-state-test.dir/src/bridge_window.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp > CMakeFiles/network-state-test.dir/src/bridge_window.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp > CMakeFiles/network-state-test.dir/src/bridge_window.cpp.i
 
 CMakeFiles/network-state-test.dir/src/bridge_window.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/network-state-test.dir/src/bridge_window.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp -o CMakeFiles/network-state-test.dir/src/bridge_window.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/src/bridge_window.cpp -o CMakeFiles/network-state-test.dir/src/bridge_window.cpp.s
 
 CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o: CMakeFiles/network-state-test.dir/flags.make
-CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o: /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp
+CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o: /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp
 CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o: CMakeFiles/network-state-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o -MF CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o.d -o CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o -MF CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o.d -o CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp
 
 CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp > CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp > CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.i
 
 CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp -o CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp -o CMakeFiles/network-state-test.dir/src/camera_wifi_serial.cpp.s
 
 CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o: CMakeFiles/network-state-test.dir/flags.make
-CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o: /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp
+CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o: /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp
 CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o: CMakeFiles/network-state-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o -MF CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o.d -o CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o -MF CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o.d -o CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp
 
 CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp > CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp > CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.i
 
 CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp -o CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp -o CMakeFiles/network-state-test.dir/src/camera_wifi_widget.cpp.s
 
 # Object files for target network-state-test
 network__state__test_OBJECTS = \
@@ -184,7 +184,7 @@ network-state-test: /usr/lib/x86_64-linux-gnu/libQt5Test.so.5.15.13
 network-state-test: /usr/lib/x86_64-linux-gnu/libQt5Gui.so.5.15.13
 network-state-test: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.15.13
 network-state-test: CMakeFiles/network-state-test.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX executable network-state-test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX executable network-state-test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/network-state-test.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -196,6 +196,6 @@ CMakeFiles/network-state-test.dir/clean:
 .PHONY : CMakeFiles/network-state-test.dir/clean
 
 CMakeFiles/network-state-test.dir/depend: network-state-test_autogen/timestamp
-	cd /home/jdedu/physical-ai-vibe-platform/bridge-server/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/jdedu/physical-ai-vibe-platform/bridge-server /home/jdedu/physical-ai-vibe-platform/bridge-server /home/jdedu/physical-ai-vibe-platform/bridge-server/build /home/jdedu/physical-ai-vibe-platform/bridge-server/build /home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/network-state-test.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/robo/physical-ai-vibe-platform/bridge-server/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/physical-ai-vibe-platform/bridge-server /home/robo/physical-ai-vibe-platform/bridge-server /home/robo/physical-ai-vibe-platform/bridge-server/build /home/robo/physical-ai-vibe-platform/bridge-server/build /home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/network-state-test.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/network-state-test.dir/depend
 

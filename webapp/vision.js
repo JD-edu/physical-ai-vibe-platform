@@ -24,7 +24,7 @@ function normalizeVisionWidget(item, profile) {
         (profile.textCommands && !profile.textCommands.includes(value)))
     )
       throw new Error(
-        `This device profile cannot send ${JSON.stringify(value)}; use Legacy with your own MakeCode program`,
+        `This device profile cannot send ${JSON.stringify(value)}; check the ESP32 command handler`,
       );
     return value;
   };
@@ -519,12 +519,12 @@ function createVisionRuntime(send, savedModels = {}) {
         score.textContent = `사용자 ${scores.win} : PC ${scores.loss} · 무승부 ${scores.draw}`;
       }
       if (decision.text) {
-        delivery.textContent = `micro:bit에 ${decision.text} 전송 중…`;
+        delivery.textContent = `ESP32에 ${decision.text} 전송 중…`;
         const sent = await send(decision.text, true);
         if (!disposed)
           delivery.textContent = sent
-            ? `micro:bit 명령 전송 완료: ${decision.text}`
-            : `전송 실패: ${decision.text} · 브릿지 연결과 MakeCode 명령 처리를 확인하세요.`;
+            ? `ESP32 명령 전송 요청 완료: ${decision.text}`
+            : `전송 실패: ${decision.text} · 브릿지와 ESP32 연결을 확인하세요.`;
       }
     }
     async function click(event) {

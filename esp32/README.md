@@ -1,45 +1,57 @@
-# ESP32 펌웨어
+# ESP32 직접 제어 펌웨어
 
-micro:bit UART 명령을 받아 Wi-Fi 및 서버 통신을 수행하고, OLED와 TB6612FNG 모터 드라이버를 제어하는 Arduino 펌웨어입니다.
+`esp32_firmware/esp32_firmware.ino`는 브릿지 서버와 Wi-Fi/TCP로 연결하고 모터와 서보 명령을 ESP32 GPIO에서 직접 실행합니다. Arduino IDE에서 ESP32 보드용으로 업로드하세요. `Adafruit GFX Library`, `Adafruit SSD1306`이 필요합니다.
 
-Arduino IDE에서 `esp32_firmware.ino`를 열어 업로드하세요. `Adafruit GFX Library`와 `Adafruit SSD1306` 라이브러리가 필요합니다.
+## 배선
 
-## Repeated Wi-Fi disconnects
+| 장치 | ESP32 GPIO |
+|---|---|
+| TB6612FNG STBY / PWMA / PWMB | 5 / 12 / 13 |
+| TB6612FNG AIN1 / AIN2 / BIN1 / BIN2 | 14 / 15 / 18 / 19 |
+| OLED SDA / SCL | 21 / 22 |
+| servo / valve / mouth 제어 신호 | 25 / 26 / 27 |
 
-The reconnect fix preserves a working station link when micro:bit sends repeated `CONNECT` commands with unchanged credentials. Changing credentials still causes a deliberate reconnect; changing only server IP closes only the TCP server connection. Each failed Wi-Fi attempt gets a 20-second connection window and then waits five seconds before the next attempt. ESP32-core auto-reconnect is disabled to keep one retry owner. A server-only connection failure retries TCP without disconnecting Wi-Fi.
+서보 전원은 ESP32 GPIO에서 공급하지 말고 별도 전원을 사용하며 GND를 공유하세요. 실제 배선이 다르면 펌웨어 상단의 핀 상수를 바꿔야 합니다.
 
-Compile and upload `esp32_firmware/esp32_firmware.ino` in Arduino IDE. The UART between micro:bit and ESP32 is **115200 baud**. Keep `setupWiFiAndServer()` in startup code rather than a forever loop.
+## 초기 Wi-Fi 설정
 
-Open ESP32 USB Serial Monitor at **115200 baud** during the next test:
+1. 제어용 ESP32에 `esp32_firmware/esp32_firmware.ino`와 같은 폴더의 `esp32_wifi_protocol.h`를 함께 업로드합니다.
+2. 데스크톱 브릿지 앱을 실행하고 **브릿지 서버** 탭에서 서버 PC의 LAN IPv4 주소를 확인합니다.
+3. Arduino 시리얼 모니터를 닫고 **ESP32 Wi-Fi 설정** 탭에서 제어용 ESP32의 USB 포트를 선택해 **USB 연결**을 누릅니다.
+4. Wi-Fi SSID, 비밀번호, 서버 PC의 LAN IPv4 주소를 입력하고 **설정 저장 및 ESP32 연결**을 누릅니다. 연결 상태와 ESP32 IP가 표시되며, 설정은 재부팅 후에도 유지됩니다. 카메라 모듈은 별도의 **카메라 Wi-Fi 설정** 탭에서 설정합니다.
 
-- `BOOT reset_reason=<number>` appearing repeatedly means the ESP32 itself is restarting. A reset reason identifies the reset mechanism, not always the underlying physical cause.
-- `WIFI_EVENT disconnected reason=<number>` records the Wi-Fi driver's disconnect reason. Deliberate disconnects during initial connection, settings changes or explicit DISCONNECT/CLEAR also produce events.
-- Repeated `micro:bit -> CONNECT` / `CONNECT_ACCEPTED` means the micro:bit program is sending repeated setup requests. Unchanged credentials no longer reset a healthy connection.
-- `SERVER_FAILED` while Wi-Fi stays connected means TCP port 5001 / server IP / bridge availability must be checked.
-- `HTTP telemetry status=<number>` distinguishes HTTP failures from Wi-Fi failures. Only HTTP 2xx counts as successful delivery.
+브릿지 UI를 사용할 수 없을 때는 USB 시리얼 모니터를 **115200 baud, 줄바꿈**으로 열고 다음을 한 줄씩 전송할 수도 있습니다.
 
-Password commands are redacted from USB logs. The OLED UART label is derived from `MICROBIT_BAUD`, so it cannot disagree with the configured baud rate.
-
-Host behavior checks (from the platform root):
-
-```bash
-python3 tests/test_esp32_reconnect.py
+```text
+SSID:무선랜이름
+PASSWORD:무선랜비밀번호
+SERVER_IP:브릿지_PC의_LAN_IP
+CONNECT
 ```
 
-This compiles the actual connection functions against simulated Wi-Fi/clock APIs and tests duplicate CONNECT handling, settings changes, server-only retries and retry timing. It does not establish the cause of a failure on a real board; the USB logs above are required for that diagnosis.
+`CONNECT`는 설정을 ESP32 비휘발성 저장소에 저장합니다. 이전 시리얼 모니터 방식의 저장값도 새 펌웨어가 읽습니다. `DISCONNECT`는 이번 실행의 연결을 끄고 모터를 정지합니다. `CLEAR`는 저장된 설정을 지우고 모터를 정지합니다. 비밀번호는 USB 로그에 출력하지 않습니다.
 
-The Arduino-ESP32 Wi-Fi event and reconnect APIs are described in [Espressif's Wi-Fi documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/wifi.html).
+브릿지 앱을 시작하고 HTTP 5000/TCP 5001 포트를 허용하세요. ESP32는 `PHYVIBE_LINK_HELLO`와 `PING/PONG`으로 연결 상태를 알립니다. 브릿지가 명령을 큐에 넣었다는 응답은 모터·서보 실행 완료 확인이 아닙니다.
 
+## 직접 처리하는 명령
 
-## 브릿지 연결 상태 감시
+| 명령 | 동작 |
+|---|---|
+| `CMD:motor:forward:50` | 두 모터 전진 |
+| `CMD:motor:backward:50` | 두 모터 후진 |
+| `CMD:motor:left:50` / `CMD:motor:right:50` | 제자리 회전 |
+| `CMD:motor:stop:0` | 모터 정지 |
+| `CMD:motor:50` / `CMD:motor:0` | 두 모터 전진 / 정지 |
+| `MOT:100:-100` | 좌우 PWM 직접 지정 (-255..255) |
+| `CMD:servo:90`, `CMD:valve:90`, `CMD:mouth:90` | 해당 GPIO 서보 각도 (0..180) |
 
-브릿지의 연결 상태 감시를 사용하려면 이 제어용 ESP32 펌웨어를 다시 수동 업로드합니다. 카메라 모듈 펌웨어가 아닙니다.
+서보 PWM은 50 Hz, 500–2500 μs 범위를 사용합니다. 실제 서보의 허용 펄스 폭에 맞게 조정하세요. 임의 텍스트 명령은 USB 로그에 `Unsupported device command`로 표시되며 물리 출력은 없습니다. 센서 데이터를 사용하려면 센서를 ESP32에 직접 연결하고 `sendToServer("DATA:key:value")`를 호출하는 코드를 추가해야 합니다.
 
-연결 시 MAC 주소로 장치를 식별하고, 브릿지의 2초 간격 연결 확인에 ESP32가 직접 응답합니다. 6초 동안 응답하지 않으면 브릿지는 소켓을 닫고 연결 끊김 이유를 NET 로그에 남깁니다. 전원/무선의 갑작스런 끊김은 마지막 응답 시점에 따라 약 6–8초 뒤 감지됩니다. 정상 종료는 TCP 이벤트로 즉시 반영됩니다.
-
-`PHYVIBE_LINK_`로 시작하는 내부 신호는 micro:bit UART와 OLED 명령 표시로 넘기지 않습니다. 모터 명령의 실행 확인이나 재전송 기능이 아닙니다. TCP 수신은 줄 단위 버퍼를 사용하므로 분할된 명령도 완성된 뒤 한 번만 전달합니다.
+## 검증
 
 ```bash
+python3 esp32/tests/test_device_commands.py
 python3 esp32/tests/test_link_frames.py
-ctest --test-dir bridge-server/build --output-on-failure
 ```
+
+이 테스트는 직접 모터·서보 명령 파서와 서버의 분할된 TCP 명령·연결 확인 프레임을 확인합니다. 실제 GPIO와 서보 동작은 업로드한 보드에서 확인해야 합니다.

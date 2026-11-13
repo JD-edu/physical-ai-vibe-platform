@@ -59,7 +59,7 @@ const intents=JSON.parse(fs.readFileSync(0,'utf8'));
 const results=[];
 for(const intent of intents){
  harness.context.intent=intent;
- results.push(harness.run('compileAppIntent(intent,appIntentContext("","http://camera/stream"),SKILL_CATALOG.profiles.legacy)'));
+ results.push(harness.run('compileAppIntent(intent,appIntentContext("","http://camera/stream"),SKILL_CATALOG.profiles.esp32)'));
 }
 process.stdout.write(JSON.stringify({projects:results,schema:harness.run("APP_INTENT_SCHEMA"),catalog:harness.run("SKILL_CATALOG")}));
 """

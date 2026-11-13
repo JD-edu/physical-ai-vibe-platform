@@ -5,7 +5,7 @@ import math
 from files import FOLDER, read_json
 
 CATALOG = read_json(FOLDER / "skill_catalog.json")
-PROFILE = CATALOG["profiles"]["legacy"]
+PROFILE = CATALOG["profiles"]["esp32"]
 DIRECTIONS = ["forward", "backward", "left", "right", "stop"]
 TARGETS = ["servo", "valve", "mouth"]
 

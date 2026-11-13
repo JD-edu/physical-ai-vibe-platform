@@ -1,7 +1,7 @@
 CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cpp.o: \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/mocs_compilation.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/mocs_compilation.cpp \
  /usr/include/stdc-predef.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/moc_bridge_server.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/moc_bridge_server.cpp \
  /usr/include/c++/13/memory /usr/include/c++/13/bits/memoryfwd.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
@@ -118,7 +118,7 @@ CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cp
  /usr/include/c++/13/backward/auto_ptr.h \
  /usr/include/c++/13/pstl/glue_memory_defs.h \
  /usr/include/c++/13/pstl/execution_defs.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/../../../src/bridge_server.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/../../../src/bridge_server.h \
  /usr/include/x86_64-linux-gnu/qt5/QtNetwork/QHostAddress \
  /usr/include/x86_64-linux-gnu/qt5/QtNetwork/qhostaddress.h \
  /usr/include/x86_64-linux-gnu/qt5/QtNetwork/qtnetworkglobal.h \
@@ -302,8 +302,8 @@ CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cp
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QTimer \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qtimer.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qbasictimer.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/moc_bridge_window.cpp \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/../../../src/bridge_window.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/moc_bridge_window.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/../../../src/bridge_window.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qwidget.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtwidgetsglobal.h \
@@ -336,11 +336,11 @@ CMakeFiles/network-state-test.dir/network-state-test_autogen/mocs_compilation.cp
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qsizepolicy.h \
  /usr/include/x86_64-linux-gnu/qt5/QtGui/qcursor.h \
  /usr/include/x86_64-linux-gnu/qt5/QtGui/qkeysequence.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/moc_camera_wifi_serial.cpp \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/../../../src/camera_wifi_serial.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/moc_camera_wifi_serial.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/../../../src/camera_wifi_serial.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QPair \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qpair.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QSocketNotifier \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qsocketnotifier.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/moc_camera_wifi_widget.cpp \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/../../../src/camera_wifi_widget.h
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/moc_camera_wifi_widget.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/network-state-test_autogen/UVLADIE3JM/../../../src/camera_wifi_widget.h

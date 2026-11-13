@@ -118,6 +118,17 @@ BridgeWindow::BridgeWindow(BridgeServer *server, const QHostAddress &address, in
     cameraPageLayout->addWidget(cameraGroup);
     cameraPageLayout->addStretch();
     tabs->addTab(cameraScroll, "카메라 Wi-Fi 설정");
+    auto *controlScroll = new QScrollArea;
+    controlScroll->setWidgetResizable(true);
+    auto *controlPage = new QWidget;
+    controlScroll->setWidget(controlPage);
+    auto *controlLayout = new QVBoxLayout(controlPage);
+    auto *controlGroup = new QGroupBox("제어용 ESP32 · USB Wi-Fi 설정");
+    auto *controlGroupLayout = new QVBoxLayout(controlGroup);
+    controlGroupLayout->addWidget(new CameraWifiWidget(controlGroup, WifiDevice::Controller));
+    controlLayout->addWidget(controlGroup);
+    controlLayout->addStretch();
+    tabs->addTab(controlScroll, "ESP32 Wi-Fi 설정");
     diagram_ = new ConnectionDiagram(this);
     diagram_->setObjectName("connectionDiagram");
     layout->addWidget(diagram_);

@@ -105,7 +105,7 @@ def main():
         args.bridge_url = project.get("network", {}).get(
             "bridgeUrl", "http://localhost:5000"
         )
-    project["network"] = {"bridgeUrl": args.bridge_url, "deviceProfile": "legacy"}
+    project["network"] = {"bridgeUrl": args.bridge_url, "deviceProfile": "esp32"}
     print("[4] 실행 값 적용·명령 구성")
     for setting in args.set:
         widget_id, separator, value = setting.partition("=")

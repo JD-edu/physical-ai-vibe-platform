@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/jdedu/physical-ai-vibe-platform/bridge-server
+CMAKE_SOURCE_DIR = /home/robo/physical-ai-vibe-platform/bridge-server
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+CMAKE_BINARY_DIR = /home/robo/physical-ai-vibe-platform/bridge-server/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/camera-provision-test.dir/depend.make
@@ -71,65 +71,65 @@ include CMakeFiles/camera-provision-test.dir/flags.make
 
 camera-provision-test_autogen/timestamp: /usr/lib/qt5/bin/moc
 camera-provision-test_autogen/timestamp: CMakeFiles/camera-provision-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC for target camera-provision-test"
-	/usr/bin/cmake -E cmake_autogen /home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/camera-provision-test_autogen.dir/AutogenInfo.json Release
-	/usr/bin/cmake -E touch /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/timestamp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC for target camera-provision-test"
+	/usr/bin/cmake -E cmake_autogen /home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/camera-provision-test_autogen.dir/AutogenInfo.json Release
+	/usr/bin/cmake -E touch /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/timestamp
 
 CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o: CMakeFiles/camera-provision-test.dir/flags.make
 CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o: camera-provision-test_autogen/mocs_compilation.cpp
 CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o: CMakeFiles/camera-provision-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o -MF CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/mocs_compilation.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o -MF CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/mocs_compilation.cpp
 
 CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/mocs_compilation.cpp > CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/mocs_compilation.cpp > CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.i
 
 CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/mocs_compilation.cpp -o CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/mocs_compilation.cpp -o CMakeFiles/camera-provision-test.dir/camera-provision-test_autogen/mocs_compilation.cpp.s
 
 CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o: CMakeFiles/camera-provision-test.dir/flags.make
-CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o: /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp
+CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o: /home/robo/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp
 CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o: CMakeFiles/camera-provision-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o -MF CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o.d -o CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o -MF CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o.d -o CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp
 
 CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp > CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp > CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.i
 
 CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp -o CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp -o CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.s
 
 CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o: CMakeFiles/camera-provision-test.dir/flags.make
-CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o: /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp
+CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o: /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp
 CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o: CMakeFiles/camera-provision-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o -MF CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o.d -o CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o -MF CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o.d -o CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp
 
 CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp > CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp > CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.i
 
 CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp -o CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.cpp -o CMakeFiles/camera-provision-test.dir/src/camera_wifi_serial.cpp.s
 
 CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o: CMakeFiles/camera-provision-test.dir/flags.make
-CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o: /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp
+CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o: /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp
 CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o: CMakeFiles/camera-provision-test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o -MF CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o.d -o CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o -c /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o -MF CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o.d -o CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.o -c /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp
 
 CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp > CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp > CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.i
 
 CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp -o CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.cpp -o CMakeFiles/camera-provision-test.dir/src/camera_wifi_widget.cpp.s
 
 # Object files for target camera-provision-test
 camera__provision__test_OBJECTS = \
@@ -152,7 +152,7 @@ camera-provision-test: /usr/lib/x86_64-linux-gnu/libQt5Test.so.5.15.13
 camera-provision-test: /usr/lib/x86_64-linux-gnu/libQt5Gui.so.5.15.13
 camera-provision-test: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.15.13
 camera-provision-test: CMakeFiles/camera-provision-test.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable camera-provision-test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable camera-provision-test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/camera-provision-test.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -164,6 +164,6 @@ CMakeFiles/camera-provision-test.dir/clean:
 .PHONY : CMakeFiles/camera-provision-test.dir/clean
 
 CMakeFiles/camera-provision-test.dir/depend: camera-provision-test_autogen/timestamp
-	cd /home/jdedu/physical-ai-vibe-platform/bridge-server/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/jdedu/physical-ai-vibe-platform/bridge-server /home/jdedu/physical-ai-vibe-platform/bridge-server /home/jdedu/physical-ai-vibe-platform/bridge-server/build /home/jdedu/physical-ai-vibe-platform/bridge-server/build /home/jdedu/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/camera-provision-test.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/robo/physical-ai-vibe-platform/bridge-server/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/robo/physical-ai-vibe-platform/bridge-server /home/robo/physical-ai-vibe-platform/bridge-server /home/robo/physical-ai-vibe-platform/bridge-server/build /home/robo/physical-ai-vibe-platform/bridge-server/build /home/robo/physical-ai-vibe-platform/bridge-server/build/CMakeFiles/camera-provision-test.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/camera-provision-test.dir/depend
 

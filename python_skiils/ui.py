@@ -383,7 +383,7 @@ def export_clicked(state):
         try:
             state["project"]["network"] = {
                 "bridgeUrl": state["bridge_url"].get(),
-                "deviceProfile": "legacy",
+                "deviceProfile": "esp32",
             }
             export_app(state["project"], destination, state["models"])
             log(state, "앱 내보내기 완료: " + destination)

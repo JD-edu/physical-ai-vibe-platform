@@ -8,13 +8,13 @@
       }
     },
     "send_text": {
-      "description": "Send exact literal text to micro:bit",
+      "description": "Send exact literal text to ESP32; custom firmware must handle it for a physical effect",
       "arguments": {
         "text": "1–256 single-line characters; preserve case/spaces"
       }
     },
     "set_servo": {
-      "description": "Slider sends CMD:target:angle to micro:bit",
+      "description": "Slider sends CMD:target:angle to the ESP32 controller",
       "arguments": {
         "target": "servo, valve, or mouth",
         "range": "integer 0..180"
@@ -75,8 +75,8 @@
     }
   },
   "profiles": {
-    "legacy": {
-      "label": "micro:bit",
+    "esp32": {
+      "label": "ESP32",
       "skills": [
         "display_sensor",
         "send_text",
@@ -84,7 +84,7 @@
         "set_motor",
         "drive_motor"
       ],
-      "description": "Existing templates; the MakeCode program must implement selected sensor keys and commands."
+      "description": "ESP32 handles motor and servo commands directly; text commands and sensor keys need custom firmware handlers."
     }
   }
 }

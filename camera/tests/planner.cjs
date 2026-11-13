@@ -147,7 +147,7 @@ assert.throws(
 context.plan = intent([{ ...camera, url: "http://explicit/stream" }]);
 assert.equal(
   run(
-    'compileAppIntent(plan,appIntentContext("카메라 http://explicit/stream",state.cameraUrl),SKILL_CATALOG.profiles.legacy).widgets[0].action.source.url',
+    'compileAppIntent(plan,appIntentContext("카메라 http://explicit/stream",state.cameraUrl),SKILL_CATALOG.profiles.esp32).widgets[0].action.source.url',
   ),
   "http://explicit/stream",
 );

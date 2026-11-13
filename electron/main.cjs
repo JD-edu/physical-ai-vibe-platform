@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, Menu, shell } = require("electron");
+const { app, BrowserWindow, dialog, Menu } = require("electron");
 const path = require("node:path");
 
 const smokeTest = process.argv.includes("--smoke-test");
@@ -10,10 +10,7 @@ function createWindow() {
     title: "PHYVIBE Studio", show: !smokeTest,
     webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true },
   });
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("https://makecode.microbit.org/")) shell.openExternal(url);
-    return { action: "deny" };
-  });
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", event => event.preventDefault());
   mainWindow.webContents.session.on("will-download", (_event, item) => {
     item.setSaveDialogOptions({

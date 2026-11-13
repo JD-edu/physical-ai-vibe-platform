@@ -1,7 +1,7 @@
 CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o: \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp \
+ /home/robo/physical-ai-vibe-platform/bridge-server/tests/camera_provision_test.cpp \
  /usr/include/stdc-predef.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_widget.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qwidget.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtwidgetsglobal.h \
@@ -293,7 +293,7 @@ CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o: \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qsizepolicy.h \
  /usr/include/x86_64-linux-gnu/qt5/QtGui/qcursor.h \
  /usr/include/x86_64-linux-gnu/qt5/QtGui/qkeysequence.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/src/camera_wifi_serial.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QJsonObject \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonobject.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonvalue.h \
@@ -320,8 +320,9 @@ CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o: \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QTimer \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qtimer.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qbasictimer.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/../camera/lilygo_camera_station/camera_wifi_protocol.h \
+ /home/robo/physical-ai-vibe-platform/bridge-server/../camera/lilygo_camera_station/camera_wifi_protocol.h \
  /usr/include/c++/13/cstring \
+ /home/robo/physical-ai-vibe-platform/bridge-server/../esp32/esp32_firmware/esp32_wifi_protocol.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/QApplication \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qapplication.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qcoreapplication.h \
@@ -497,4 +498,4 @@ CMakeFiles/camera-provision-test.dir/tests/camera_provision_test.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/unistd-decl.h \
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
  /usr/include/linux/close_range.h \
- /home/jdedu/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/include/camera_provision_test.moc
+ /home/robo/physical-ai-vibe-platform/bridge-server/build/camera-provision-test_autogen/include/camera_provision_test.moc

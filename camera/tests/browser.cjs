@@ -81,7 +81,7 @@ const delay = ms => new Promise(r=>setTimeout(r,ms));
  await evaluate('document.querySelector("#esp32CameraPanel").open=true');await delay(100);
  await evaluate(`document.querySelector('#esp32CameraPreview [data-vision="start"]').click()`);
  await wait(`document.querySelector('#esp32CameraPreview .vision-progress').textContent.includes('연결 완료')`);
- await evaluate(`state.widgets=compileAppIntent({version:1,title:'카메라',features:[{kind:'camera'}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.legacy).widgets;renderWidgets();document.querySelector('#widgetGrid [data-vision="start"]').click()`);
+ await evaluate(`state.widgets=compileAppIntent({version:1,title:'카메라',features:[{kind:'camera'}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.esp32).widgets;renderWidgets();document.querySelector('#widgetGrid [data-vision="start"]').click()`);
  await wait(`document.querySelector('#widgetGrid .vision-progress').textContent.includes('연결 완료')`);
  await wait(`document.querySelector('#esp32CameraPreview .vision-connection').textContent.includes('다른 창')`);
  assert.equal(cameraActive,1,'Moving camera to generated widget must keep only one connection');
@@ -89,7 +89,7 @@ const delay = ms => new Promise(r=>setTimeout(r,ms));
  assert.equal(cameraActive,0);
  const stub=`globalThis.modelCalls={infer:0,fit:0,disposed:0};const tensor=(shape=[1,4])=>({shape,dispose(){modelCalls.disposed++}});const mockHead=()=>({inputs:[{shape:[null,4]}],outputs:[{shape:[null,2]}],add(){},compile(){},async fit(xs,ys,options){modelCalls.fit++;await options.callbacks.onEpochEnd(0,{loss:0.1})},predict:()=>({dataSync:()=>[0.95,0.05]}),async save(handler){return handler({modelTopology:{mock:true},weightSpecs:[],weightData:new ArrayBuffer(4)})},dispose(){}});globalThis.tf={io:{withSaveHandler:f=>f,fromMemory:x=>x},loadLayersModel:async()=>mockHead(),ready:async()=>{},tidy:f=>f(),nextFrame:async()=>{},concat:rows=>tensor([rows.length,4]),tensor1d:()=>tensor(),oneHot:()=>tensor(),layers:{dense:x=>x},sequential:()=>mockHead()};globalThis.mobilenet={load:async()=>({infer(input){if(input.width!==224||input.height!==224)throw Error('Wrong CNN dimensions');input.getContext('2d').getImageData(0,0,1,1);modelCalls.infer++;return tensor()},model:{dispose(){}}})};`;
  await evaluate(stub);
- await evaluate(`state.widgets=compileAppIntent({version:1,title:'CNN',features:[{kind:'classifier',classes:['object','empty']}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.legacy).widgets;state.generationValid=true;renderWidgets();document.querySelector('#widgetGrid [data-vision="start"]').click();`);
+ await evaluate(`state.widgets=compileAppIntent({version:1,title:'CNN',features:[{kind:'classifier',classes:['object','empty']}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.esp32).widgets;state.generationValid=true;renderWidgets();document.querySelector('#widgetGrid [data-vision="start"]').click();`);
  await wait(`document.querySelector('#widgetGrid .vision-progress').textContent.includes('준비 완료')`);
  for(const label of [0,1]){await evaluate(`document.querySelector('#widgetGrid [data-vision="sample"][data-class="${label}"]').click()`);await wait(`document.querySelector('#widgetGrid [data-count="${label}"]').textContent==='5장' && !document.querySelector('#widgetGrid [data-vision="reset"]').disabled`);}
  assert.equal(await evaluate('modelCalls.infer'),10);
@@ -155,7 +155,7 @@ const delay = ms => new Promise(r=>setTimeout(r,ms));
  // Compile and export a camera remote, then exercise its real controls against a mock bridge.
  await cdp('Page.navigate',{url:origin+'/webapp/index.html'},sessionId);
  await wait('typeof compileAppIntent === "function" && typeof downloadProject === "function"');
- await evaluate(`state.provider='demo';clearTimeout(qwenRetryTimer);document.querySelectorAll('dialog').forEach(d=>d.close());state.cameraUrl=${JSON.stringify(cameraURL)};state.bridgeUrl=${JSON.stringify(origin)};state.widgets=compileAppIntent({version:1,title:'카메라 리모컨',features:[{kind:'camera'},{kind:'motor',speedControl:'slider',directions:['forward','backward','left','right','stop']}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.legacy).widgets;state.generationValid=true;renderWidgets();`);
+ await evaluate(`state.provider='demo';clearTimeout(qwenRetryTimer);document.querySelectorAll('dialog').forEach(d=>d.close());state.cameraUrl=${JSON.stringify(cameraURL)};state.bridgeUrl=${JSON.stringify(origin)};state.widgets=compileAppIntent({version:1,title:'카메라 리모컨',features:[{kind:'camera'},{kind:'motor',speedControl:'slider',directions:['forward','backward','left','right','stop']}]},appIntentContext('',state.cameraUrl),SKILL_CATALOG.profiles.esp32).widgets;state.generationValid=true;renderWidgets();`);
  exported=await evaluate(`(async()=>{let saved;const old=URL.createObjectURL,click=HTMLAnchorElement.prototype.click;URL.createObjectURL=b=>{saved=b;return 'blob:test'};HTMLAnchorElement.prototype.click=()=>{};try{await downloadProject()}finally{URL.createObjectURL=old;HTMLAnchorElement.prototype.click=click}return await saved.text()})()`);
  assert(!exported.includes('function compileAppIntent'),'Standalone must not depend on compiler or LLM');
  await cdp('Page.navigate',{url:origin+'/export.html'},sessionId);

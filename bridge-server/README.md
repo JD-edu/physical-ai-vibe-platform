@@ -11,10 +11,10 @@ Customer webapps ───────────┤
                   Standalone C++ bridge
                             │ Wi-Fi, HTTP telemetry / TCP :5001 commands
                             ▼
-                    ESP32 Wi-Fi bridge
-                            │ UART inside the hardware assembly
+                    ESP32 controller
+                            │ direct GPIO/PWM
                             ▼
-                  micro:bit controller (MakeCode)
+                      motors / servos
 ```
 
 ## Build on Ubuntu
@@ -82,7 +82,7 @@ Start the bridge separately and use the same HTTP URL in both clients:
 - Same PC: `http://127.0.0.1:5000`.
 - Other PC/mobile: `http://SERVER_PC_LAN_IP:5000`.
 
-ESP32 must use the server PC's LAN address. A firewall must permit ports 5000/5001 for device access. micro:bit remains programmed separately in MakeCode. There is no browser USB/serial connection.
+ESP32 must use the server PC's LAN address. A firewall must permit ports 5000/5001 for device access. Configure the control ESP32 in the desktop bridge's **ESP32 Wi-Fi 설정** tab over USB; it reconnects using saved settings. There is no browser USB/serial connection.
 
 Changing the TCP command port also requires changing the ESP32 firmware's command port. Step 5 bring-up firmware sends telemetry through `/exchange`; it can continue using that endpoint. Receiving browser commands requires ESP32 firmware with the persistent TCP command connection.
 
@@ -100,7 +100,7 @@ Changing the TCP command port also requires changing the ESP32 firmware's comman
 
 Status preserves the existing `latest_message`, `latest_time`, `latest_command`, `latest_command_time`, `message_history`, `message_sequence`, and `connected_clients` fields. Sensor data such as `DATA:temperature:25` updates widgets bound to `temperature`. TCP sensor messages are newline-framed and also enter the receive history.
 
-Commands preserve case and spaces, are limited to 1–256 Unicode characters, and cannot contain CR/LF. The TCP transport adds one framing newline. An empty device connection list returns HTTP 503; malformed commands return HTTP 400. `sent_count` means bytes were queued to ESP32 connections, not that micro:bit executed the command.
+Commands preserve case and spaces, are limited to 1–256 Unicode characters, and cannot contain CR/LF. The TCP transport adds one framing newline. An empty device connection list returns HTTP 503; malformed commands return HTTP 400. `sent_count` means bytes were queued to ESP32 connections, not that the physical output completed.
 
 The old Python web monitor and `/send-command` form handler have been replaced by this desktop UI and `/api/command` JSON API. Studio and current exported webapps already use that API. Python servers in `physical/board-bring-up/` remain historical isolated tests, not the platform runtime.
 
@@ -129,20 +129,28 @@ cmake --install bridge-server/build --prefix "$HOME/.local"
 This installs the bridge separately from Studio. Qt runtime libraries are still required. It is a Linux executable, not a Python bundle or a Windows `.exe`.
 
 
-## USB camera Wi-Fi setup
+## USB Wi-Fi setup for the control ESP32 and camera
 
-The desktop window has two tabs: **브릿지 서버** for network status, HTTP/TCP ports, start/stop, RX/TX monitoring and commands; **카메라 Wi-Fi 설정** for USB provisioning. Switching tabs keeps existing server and USB sessions alive.
+The desktop window has three tabs: **브릿지 서버** for network status, HTTP/TCP ports, start/stop, RX/TX monitoring and commands; **카메라 Wi-Fi 설정** for camera provisioning; **ESP32 Wi-Fi 설정** for the control ESP32. Switching tabs keeps existing server and USB sessions alive.
+
+For the control ESP32:
+
+1. Upload `esp32/esp32_firmware/esp32_firmware.ino` together with `esp32_wifi_protocol.h` to the control ESP32. Start the bridge and note the server PC's LAN IPv4 address in **브릿지 서버**.
+2. Close Arduino Serial Monitor. In **ESP32 Wi-Fi 설정**, select the control ESP32's USB port and click **USB 연결**. The bridge checks the firmware identity before enabling settings.
+3. Enter the Wi-Fi SSID/password and the server PC's LAN IPv4 address, then click **설정 저장 및 ESP32 연결**. The ESP32 saves all three values together, reconnects and reports its Wi-Fi state and IP. It uses the saved values after reboot.
+
+For the camera:
 
 1. Upload the updated `camera/lilygo_camera_station` sketch, including its header. Install the Adafruit SSD1306/GFX libraries for the camera OLED.
 2. Close Arduino Serial Monitor. Choose the camera port (usually `/dev/ttyUSB0`) and click **USB 연결**.
 3. Enter the router SSID/password and click **설정 저장 및 카메라 연결**. The camera overwrites its saved configuration, reconnects, and returns its stream URL.
 4. On connection failure, the camera OLED asks for setup again; resend settings in the same UI. Reconfiguration works even if a previous SSID was saved or connected.
 
-This Linux build uses nonblocking native serial I/O integrated with Qt's event loop. No QtSerialPort package or separate Python provisioning app is required. The firmware is identified before the password can be sent. The PC does not persist passwords or log the raw settings packet. A reconnect timeout leaves the camera reachable over USB.
+Both tabs use the same nonblocking native USB serial implementation integrated with Qt's event loop. No QtSerialPort package or separate Python provisioning app is required. Each tab checks the correct firmware identity before sending credentials. The PC does not persist passwords or log the raw settings packet. A reconnect timeout leaves either device reachable over USB.
 
 Video stays direct between the camera and the editor/generated app. This feature does not add a video relay. See [camera setup and OLED states](../camera/README.md).
 
-`ctest --test-dir bridge-server/build --output-on-failure` includes a real pseudo-terminal/UI test and camera credential storage-policy tests, plus the existing bridge window start/stop test. `BUILD_TESTING=OFF` builds the runtime without Qt Test or Python test tools.
+`ctest --test-dir bridge-server/build --output-on-failure` includes pseudo-terminal/UI tests for both devices, ESP32 credential parser tests, camera credential storage-policy tests and the bridge window start/stop test. `BUILD_TESTING=OFF` builds the runtime without Qt Test or Python test tools.
 
 
 ## Connection health and network events
@@ -151,7 +159,7 @@ The **브릿지 서버** tab now distinguishes a TCP socket from a responsive ES
 
 Upload the updated **control ESP32** sketch at `esp32/esp32_firmware/esp32_firmware.ino` to enable link monitoring. The separate camera module sketch is not involved. The ESP32 announces its Wi-Fi MAC using `PHYVIBE_LINK_HELLO:<id>`. The bridge sends `PHYVIBE_LINK_PING:<nonce>` about every 2 seconds and requires the matching `PHYVIBE_LINK_PONG:<nonce>` within 6 seconds. A silent failure is detected within approximately 6–8 seconds, subject to the event loop running. A normal TCP close/error is processed immediately. A new connection with the same device ID replaces the stale old socket.
 
-These frames are consumed inside ESP32 and never forwarded to micro:bit, motor blocks, or sensor history. They check the ESP32 application's link, not whether a motor command executed. There is no automatic command resend or micro:bit execution ACK.
+These frames are consumed inside ESP32 and never forwarded to motor outputs or sensor history. They check the ESP32 application's link, not whether a motor command executed. There is no automatic command resend or actuator execution ACK.
 
 Older firmware continues to receive only blank-line keepalives, with Linux TCP keepalive/user-timeout tuning as a fallback. Its application health cannot be verified, so update the firmware for the explicit response indicator and bounded link heartbeat timeout.
 

@@ -4,14 +4,14 @@
 
 
 # Configuration directories and files
-SourceDirectory: /home/jdedu/physical-ai-vibe-platform/bridge-server
-BuildDirectory: /home/jdedu/physical-ai-vibe-platform/bridge-server/build
+SourceDirectory: /home/robo/physical-ai-vibe-platform/bridge-server
+BuildDirectory: /home/robo/physical-ai-vibe-platform/bridge-server/build
 
 # Where to place the cost data store
 CostDataFile: 
 
 # Site is something like machine.domain, i.e. pragmatic.crd
-Site: jdedu-home
+Site: robo
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
 BuildName: Linux-c++
@@ -27,7 +27,7 @@ SubmitInactivityTimeout:
 NightlyStartTime: 00:00:00 EDT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "/usr/bin/cmake" "/home/jdedu/physical-ai-vibe-platform/bridge-server"
+ConfigureCommand: "/usr/bin/cmake" "/home/robo/physical-ai-vibe-platform/bridge-server"
 MakeCommand: /usr/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}"
 DefaultCTestConfigurationType: Release
 
@@ -76,7 +76,7 @@ CudaSanitizerCommand:
 CudaSanitizerCommandOptions: 
 MemoryCheckType: 
 MemoryCheckSanitizerOptions: 
-MemoryCheckCommand: /usr/bin/compute-sanitizer
+MemoryCheckCommand: MEMORYCHECK_COMMAND-NOTFOUND
 MemoryCheckCommandOptions: 
 MemoryCheckSuppressionFile: 
 

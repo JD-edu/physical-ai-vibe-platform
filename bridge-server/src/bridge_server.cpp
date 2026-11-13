@@ -111,7 +111,7 @@ void BridgeServer::maintainLinks() {
             link.waiting = true; link.deadline = time + probeTimeoutMs_;
         } else {
             // Older firmware ignores empty lines. Do not send control-looking data
-            // to micro:bit programs that have not negotiated link heartbeats.
+            // to older ESP32 firmware that has not negotiated link heartbeats.
             if (socket->write("\n") != 1) { closeDevice(socket, "TCP 상태 확인 송신 실패"); continue; }
         }
         link.nextProbe = time + probeIntervalMs_;

@@ -13,6 +13,8 @@
     "test:vision:browser": "node camera/tests/browser.cjs",
     "test:bridge": "ctest --test-dir bridge-server/build --output-on-failure",
     "bridge": "bridge-server/build/phyvibe-bridge",
+    "simulator": "node simulator/server.cjs",
+    "test:simulator": "node simulator/test.cjs",
     "test:intent": "node camera/tests/planner.cjs && node camera/tests/motor_planner.cjs",
     "test:intent:qwen": "node camera/tests/planner.cjs --real-qwen",
     "test:camera": "node camera/tests/latency.cjs && python3 camera/tests/test_latency.py"

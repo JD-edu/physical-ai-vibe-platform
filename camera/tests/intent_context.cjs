@@ -56,7 +56,7 @@ module.exports = function createContext() {
   const compile = (features, overrides = {}) => {
     context.intent = { version: 1, title: "테스트", features, ...overrides };
     return run(
-      'compileAppIntent(intent, appIntentContext("",state.cameraUrl),SKILL_CATALOG.profiles.legacy)',
+      'compileAppIntent(intent, appIntentContext("",state.cameraUrl),SKILL_CATALOG.profiles.esp32)',
     );
   };
   return { context, run, compile, responses, requests };
