@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "title": "classifier",
+  "features": [
+    {
+      "kind": "classifier",
+      "input": "configured",
+      "classes": [
+        "양품",
+        "불량"
+      ],
+      "confidence": 0.8
+    }
+  ],
+  "unsupported": []
+}

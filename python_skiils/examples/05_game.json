@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "title": "game",
+  "features": [
+    {
+      "kind": "classifier",
+      "input": "webcam",
+      "classes": [
+        "rock",
+        "paper",
+        "scissors"
+      ],
+      "game": {
+        "beats": [
+          [
+            "rock",
+            "scissors"
+          ],
+          [
+            "scissors",
+            "paper"
+          ],
+          [
+            "paper",
+            "rock"
+          ]
+        ],
+        "winText": "O",
+        "lossText": "x",
+        "drawText": ""
+      }
+    }
+  ],
+  "unsupported": []
+}

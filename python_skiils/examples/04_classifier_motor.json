@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "title": "classifier_motor",
+  "features": [
+    {
+      "kind": "classifier",
+      "input": "configured",
+      "classes": [
+        "물체 있음",
+        "물체 없음"
+      ],
+      "confidence": 0.85,
+      "deviceRules": [
+        {
+          "label": "물체 있음",
+          "effect": {
+            "kind": "drive",
+            "direction": "forward",
+            "speed": 30
+          }
+        },
+        {
+          "label": "물체 없음",
+          "effect": {
+            "kind": "drive",
+            "direction": "stop",
+            "speed": 0
+          }
+        }
+      ]
+    }
+  ],
+  "unsupported": []
+}

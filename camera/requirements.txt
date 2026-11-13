@@ -1,0 +1,3 @@
+# GUI display requires opencv-python, not opencv-python-headless.
+opencv-python>=4.6,<5
+numpy>=1.23,<3

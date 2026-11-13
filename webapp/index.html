@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#07111f">
+  <meta name="theme-color" content="#087f8c">
   <title>PHYVIBE Studio</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=esp32-1">
   <link rel="stylesheet" href="qwen.css">
 </head>
 <body>
@@ -13,18 +13,15 @@
     <header class="topbar">
       <a class="brand" href="#" aria-label="PHYVIBE 홈">
         <span class="brand-mark">P</span>
-        <span><strong>PHYVIBE</strong><small>PHYSICAL AI STUDIO</small></span>
+        <span><strong>PHYVIBE</strong><small>MAKER STUDIO</small></span>
       </a>
       <div class="project-title">
-        <span class="status-dot"></span>
-        <input id="projectName" value="스마트 환경 모니터" aria-label="프로젝트 이름">
-        <span class="saved-state" id="savedState">저장됨</span>
+        <input id="projectName" value="새 프로젝트" aria-label="프로젝트 이름">
       </div>
       <nav class="top-actions" aria-label="프로젝트 작업">
-        <button class="btn ghost" id="shareBtn">↗ 공유</button>
+        <label class="mode-switcher">실행 대상<select id="connectionMode" aria-label="실행 대상"><option value="real">실제 장치</option><option value="simulator">2D 시뮬레이터</option></select></label>
         <button class="btn primary" id="exportBtn">↓ 웹앱 내보내기</button>
         <button class="icon-btn" id="settingsBtn" aria-label="AI 설정">⚙</button>
-        <button class="avatar" aria-label="사용자 메뉴">MK</button>
       </nav>
     </header>
 
@@ -52,28 +49,12 @@
           </article>
         </div>
 
-        <div class="quick-section">
-          <span class="section-label">빠른 시작</span>
-          <div class="chips">
-            <button data-prompt="화분 토양 습도 게이지를 띄우고 30% 이하면 경고와 급수 밸브 버튼을 만들어줘">🌱 잔소리 화분</button>
-            <button data-prompt="초음파 거리와 좌우 모터를 제어하는 자율주행 터틀 대시보드를 만들어줘">🐢 자율주행 터틀</button>
-            <button data-prompt="온습도 모니터링 카드를 만들고 온도가 28도를 넘으면 경고해줘">🌡 온습도 모니터</button>
-            <button data-prompt="모터 속도를 조절하는 안전한 슬라이더를 만들어줘">⚙ 모터 제어</button>
-            <button data-prompt="초음파 센서로 10cm 이하 접근을 감지하는 경보판을 만들어줘">◉ 거리 경보기</button>
-            <button data-prompt="조도 센서 값을 실시간 차트로 보여줘">☀ 스마트 조명</button>
-          </div>
-        </div>
-
         <div class="composer-wrap">
           <div class="target-row">
-            <span>생성 대상</span><small id="activeProviderLabel" aria-live="polite"></small><button class="text-btn" id="returnToQwenBtn">Local LLM 연결 ↻</button>
-            <div class="segment" id="targetSegment">
-              <button class="active" data-target="widget">웹 UI</button>
-              <a class="text-btn" href="https://makecode.microbit.org/" target="_blank" rel="noopener">micro:bit MakeCode ↗</a>
-            </div>
+            <span>생성 대상</span><select id="deviceProfileSelect" aria-label="장치 프로필"></select><small id="activeProviderLabel" aria-live="polite"></small><button class="text-btn" id="returnToQwenBtn">Local LLM 연결 ↻</button>
           </div>
           <div class="composer">
-            <textarea id="promptInput" rows="4" placeholder="자연어로 만들고 싶은 기능을 설명하세요..."></textarea>
+            <textarea id="promptInput" aria-label="만들고 싶은 기능" rows="4" placeholder="자연어로 만들고 싶은 기능을 설명하세요..."></textarea>
             <div class="composer-footer">
               <span><kbd>⌘</kbd><kbd>Enter</kbd>로 생성</span>
               <button id="generateBtn" class="send-btn" aria-label="생성">↑</button>
@@ -101,11 +82,12 @@
 
         <div class="workspace">
           <div class="preview-frame" id="previewFrame">
-            <div class="dashboard-head">
-              <div><span class="live-pill"><i></i> LIVE</span><h2 id="dashboardTitle">교실 환경 대시보드</h2><p>Wi-Fi / Ethernet · ESP32 브릿지 · micro:bit 컨트롤러</p></div>
+            <div class="dashboard-head hidden">
+              <div><span class="live-pill"><i></i> LIVE</span><h2 id="dashboardTitle"></h2><p>Wi-Fi / Ethernet · 브릿지 서버 · ESP32 컨트롤러</p></div>
               <div class="updated">마지막 업데이트 <strong id="lastUpdated">방금 전</strong></div>
             </div>
             <div class="widget-grid" id="widgetGrid"></div>
+            <iframe id="simulatorScene" class="simulator-scene hidden" title="2D 가상 로봇"></iframe>
           </div>
 
           <div class="code-view hidden" id="codeView">
@@ -118,34 +100,34 @@
             <pre><code id="schemaContent"></code></pre>
           </div>
         </div>
-        <div class="canvas-status"><span><i class="pulse"></i> 런타임 정상</span><span>JSON 위젯 엔진 · 60 FPS</span></div>
       </section>
 
       <aside class="panel device-panel" id="devicePanel">
         <div class="device-scroll">
+          <details class="side-section" id="esp32CameraPanel" open>
+            <summary>ESP32 카메라 실시간 영상</summary>
+            <label class="network-field">카메라 스트림 URL<input id="esp32CameraUrl" type="url" placeholder="http://카메라IP/stream"></label>
+            <p class="network-note">브릿지에서 확인한 카메라 주소를 넣고 카메라 열기를 누르세요. 끊기면 자동으로 다시 연결합니다.</p>
+            <div id="esp32CameraPreview"></div>
+          </details>
           <section class="side-section bridge-card">
-            <div class="side-title"><div><span class="eyebrow">BRIDGE SERVER</span><h2>네트워크 연결</h2></div><label class="switch"><input type="checkbox" id="bridgeToggle"><span></span></label></div>
+            <div class="side-title"><div><span class="eyebrow">BRIDGE SERVER</span><h2>네트워크 연결</h2></div><label class="switch"><input type="checkbox" id="bridgeToggle" aria-label="네트워크 연결"><span></span></label></div>
             <div class="connection-hero">
               <div class="connection-icon" id="connectionIcon">⌁</div>
               <div><strong id="connectionLabel">기기 대기 중</strong><span id="connectionSub">브릿지를 시작해 주세요</span></div>
             </div>
             <div class="telemetry">
               <div><span>게이트웨이</span><strong id="gatewayValue">—</strong></div>
-              <div><span>ESP32 연결 수</span><strong id="clientCountValue">—</strong></div>
+              <div><span id="clientCountLabel">ESP32 연결 수</span><strong id="clientCountValue">—</strong></div>
               <div><span>HTTP 응답 시간</span><strong id="rttValue">—</strong></div>
             </div>
-            <label class="network-field">브릿지 서버 URL<input id="bridgeUrlInput" type="url" placeholder="http://192.168.0.100:5000"></label><p class="network-note">PC는 Wi-Fi 또는 Ethernet으로 서버에 연결합니다. ESP32는 Wi-Fi 브릿지, micro:bit는 MakeCode로 프로그래밍하는 컨트롤러입니다.</p>
+            <label class="network-field">브릿지 서버 URL<input id="bridgeUrlInput" type="url" placeholder="http://192.168.0.100:5000"></label><p class="network-note">실제 장치는 브릿지 서버에, 시뮬레이터는 로컬 시뮬레이터 서버에 연결합니다.</p>
           </section>
 
-          <section class="side-section constraints">
-            <div class="side-title compact"><div><span class="eyebrow">SAFETY GUARDRAIL</span><h2>하드웨어 구성</h2></div><button class="icon-btn small" id="addHardwareBtn">＋</button></div>
-            <label class="hardware-item"><span class="hardware-icon violet">↻</span><span><strong>서보 모터</strong><small>P0 · 0–180° 클램핑</small></span><input type="checkbox" checked data-hardware="servo"></label>
-            <label class="hardware-item"><span class="hardware-icon cyan">⌁</span><span><strong>초음파 센서</strong><small>P1 / P2 · HC-SR04</small></span><input type="checkbox" checked data-hardware="ultrasonic"></label>
-            <label class="hardware-item"><span class="hardware-icon amber">⚙</span><span><strong>DC 모터</strong><small>micro:bit · 최대 80%</small></span><input type="checkbox" data-hardware="motor"></label>
-          </section>
+
 
           <section class="side-section terminal-section">
-            <div class="terminal-head"><div><span class="eyebrow">NETWORK MONITOR</span><h2>Wi-Fi 데이터 모니터</h2></div><div><button id="clearLogsBtn">지우기</button><button id="copyErrorBtn">AI에 질문</button></div></div>
+            <div class="terminal-head"><div><span class="eyebrow">NETWORK MONITOR</span><h2>Wi-Fi 데이터 모니터</h2></div><div><button id="clearLogsBtn">지우기</button></div></div>
             <div class="terminal" id="terminal" aria-live="polite"></div>
             <div class="terminal-input"><span>TX</span><input id="txInput" placeholder="CMD:servo:90"><button id="sendTxBtn">전송</button></div>
           </section>
@@ -184,16 +166,10 @@
     </div>
   </dialog>
 
-  <dialog id="shareDialog">
-    <div class="modal-card share-card">
-      <div class="modal-head"><div><span class="eyebrow">EXPORT & SHARE</span><h2>스튜디오 링크 공유</h2></div><button class="icon-btn" onclick="this.closest('dialog').close()">×</button></div>
-      <div class="qr-placeholder" aria-label="프로젝트 QR 미리보기"><span>PHY</span><i></i></div>
-      <p>이 링크는 스튜디오를 엽니다. 사용자 대시보드를 공유하려면 내보낸 HTML 웹앱을 웹 서버에서 제공하세요.</p>
-      <div class="share-link"><input id="shareUrl" readonly><button id="copyLinkBtn">복사</button></div>
-      <button class="btn primary wide" id="nativeShareBtn">스마트폰으로 공유</button>
-    </div>
-  </dialog>
-
-  <script src="app.js?v=harness-3.1-readable"></script>
+  <script src="skills.js?v=esp32-1"></script>
+  <script src="camera.js?v=stable-stream-2"></script>
+  <script src="vision.js?v=esp32-1"></script>
+  <script src="intent.js?v=esp32-1"></script>
+  <script src="app.js?v=esp32-1"></script>
 </body>
 </html>

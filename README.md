@@ -1,10 +1,15 @@
 # Physical AI Vibe Coding Platform
 
-자연어로 피지컬 AI 대시보드를 만들고 micro:bit와 ESP32를 제어하는 브라우저 기반 스튜디오입니다. AI 생성은 사용자 PC에서 실행하는 **Qwen3 8B + llama.cpp**를 기본으로 사용합니다.
+## 2D 시뮬레이터
+
+실제 장치 없이 생성한 로봇 조종 웹앱을 시험하려면 별도 터미널에서 `npm run simulator`를 실행하고 Studio의 **실행 대상 → 2D 시뮬레이터**를 선택하세요. 전진·후진·좌우회전·정지 버튼을 누르면 라이브 뷰의 로봇이 움직입니다. 내보낸 웹앱에서도 같은 실행 대상을 선택할 수 있습니다. [사용 방법과 지원 명령](simulator/README.md)을 참고하세요.
+
+자연어로 피지컬 AI 대시보드를 만들고 ESP32를 제어하는 브라우저 기반 스튜디오입니다. AI 생성은 사용자 PC에서 실행하는 **Qwen3 8B + llama.cpp**를 기본으로 사용합니다.
+
 
 ## 가장 빠른 실행 순서
 
-프로그램은 두 개의 터미널에서 실행합니다.
+브라우저 Studio와 LLM은 아래 두 터미널에서 실행합니다. 실제 장치 통신에는 별도의 C++ 브릿지 앱을 실행하고 Start server를 누릅니다.
 
 1. 터미널 1에서 Qwen3 8B 서버를 `8080` 포트로 실행합니다.
 2. 터미널 2에서 웹 서버를 `3000` 포트로 실행합니다.
@@ -15,12 +20,12 @@ Qwen3 8B (llama.cpp)  http://localhost:8080
           ↓ OpenAI 호환 API
 PHYVIBE 웹 스튜디오     http://localhost:3000/webapp/
           ↓ HTTP (Wi-Fi / Ethernet)
-Flask 네트워크 서버      http://서버_PC_IP:5000
+독립 C++ 네트워크 서버      http://서버_PC_IP:5000
           ↓ Wi-Fi / TCP 5001
-ESP32 Wi-Fi 브릿지 → micro:bit 컨트롤러 (MakeCode)
+ESP32 Wi-Fi 컨트롤러 → 모터·서보 출력
 ```
 
-> llama.cpp는 `8080`, 네트워크 브릿지는 HTTP `5000` 및 TCP `5001`을 사용합니다. micro:bit 프로그래밍은 MakeCode에서 별도로 진행합니다.
+> llama.cpp는 `8080`, 네트워크 브릿지는 HTTP `5000` 및 TCP `5001`을 사용합니다. ESP32 펌웨어가 장치 명령을 직접 처리합니다.
 
 ## 1. 준비물
 
@@ -334,13 +339,30 @@ llama-server -m "/home/user/My Models/Qwen3-8B-Q4_K_M.gguf" --port 8080
 
 ```text
 .
-├── physical/
-│   ├── microbit/             # MakeCode 확장
-│   ├── esp32/                # ESP32 펌웨어
-│   └── bridge-server/        # 웹앱과 ESP32 통신 서버
+├── esp32/                    # ESP32 직접 제어 펌웨어
+├── bridge-server/            # 독립 C++ 네트워크 서버와 시작/정지 UI
+├── simulator/                # 2D 가상 로봇 및 가상 브릿지
 ├── webapp/                   # PHYVIBE 웹 스튜디오
-└── tutorials/                # 단계별 실습 자료
+└── camera/                   # ESP32 카메라 펌웨어와 수신 도구
 ```
 
-세부 웹앱 기능은 `webapp/README.md`, 하드웨어 실행과 배선 방법은 각 `physical` 하위 폴더의 README를 참고하세요.
+세부 웹앱 기능은 `webapp/README.md`, 하드웨어 실행과 배선 방법은 `esp32/README.md`를 참고하세요.
 # physical-ai-vibe-platform
+
+## Ubuntu desktop app
+
+Electron 기반 Studio는 `electron/README.md`, 별도로 실행하는 C++ 브릿지는 `physical/bridge-server/README.md`를 참고하세요. 빌드 결과는 `dist/`의 `.deb` 및 `.AppImage`입니다. 데스크톱 앱은 별도 정적 웹 서버 없이 실행되며 llama.cpp는 따로 실행합니다.
+
+Electron 설치, Ubuntu 실행 파일 생성 및 문제 해결의 상세 순서는 [Ubuntu Electron setup guide](electron/UBUNTU_SETUP.md)를 참고하세요. 이미 만들어진 앱을 설치하려면 가이드의 Part 1만 진행하면 됩니다.
+
+## Standalone C++ bridge (architecture v2)
+
+Studio and exported customer webapps use the same external network bridge. Electron does not bundle, start, or stop it.
+
+```bash
+npm run build:bridge
+npm run test:bridge
+./physical/bridge-server/build/phyvibe-bridge
+```
+
+Click **Start server** in its window. The default HTTP/TCP ports are 5000/5001. Use `http://127.0.0.1:5000` from this PC and the server PC's LAN address from other devices. Qwen remains on 8080. See [C++ bridge setup](physical/bridge-server/README.md).

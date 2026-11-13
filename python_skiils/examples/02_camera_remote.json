@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "title": "camera_remote",
+  "features": [
+    {
+      "kind": "camera",
+      "input": "configured"
+    },
+    {
+      "kind": "motor",
+      "speedControl": "slider",
+      "speed": 50,
+      "directions": [
+        "forward",
+        "backward",
+        "left",
+        "right",
+        "stop"
+      ]
+    }
+  ],
+  "unsupported": []
+}
